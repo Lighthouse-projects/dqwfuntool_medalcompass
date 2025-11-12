@@ -92,7 +92,7 @@ eas build --platform all
 ### データベーススキーマ
 
 **1. medalsテーブル** (publicスキーマ):
-- `id` (uuid, 主キー)
+- `medal_no` (bigint, 主キー, GENERATED ALWAYS AS IDENTITY) - メダル番号（連番、何個登録されたかがわかる）
 - `user_id` (uuid, auth.usersへの外部キー)
 - `latitude` (decimal(10,8), NOT NULL) - 緯度
 - `longitude` (decimal(11,8), NOT NULL) - 経度
@@ -102,11 +102,11 @@ eas build --platform all
 - `updated_at` (timestamptz, NOT NULL) - 更新日時
 
 **2. medal_reportsテーブル** (publicスキーマ):
-- `id` (uuid, 主キー)
-- `medal_id` (uuid, medalsへの外部キー)
+- `id` (bigint, 主キー, GENERATED ALWAYS AS IDENTITY) - 通報ID（連番）
+- `medal_no` (bigint, medalsへの外部キー)
 - `reporter_user_id` (uuid, auth.usersへの外部キー)
 - `created_at` (timestamptz, NOT NULL) - 通報日時
-- UNIQUE制約: (medal_id, reporter_user_id) - 重複通報防止
+- UNIQUE制約: (medal_no, reporter_user_id) - 重複通報防止
 
 **Row Level Security (RLS) ポリシー**:
 - **medals SELECT**: 全員が閲覧可能（`USING (true)`）

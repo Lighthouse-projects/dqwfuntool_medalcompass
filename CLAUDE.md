@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 重要なルール
+
+**⚠️ COMMITとPUSHは勝手にしないこと**
+- ファイルの変更後、必ずユーザーに確認を求めること
+- ユーザーが明示的に「コミットして」「プッシュして」と指示した場合のみ実行すること
+- 自動でのgit操作は禁止
+
 ## プロジェクト概要
 
 **MedalCompass (dqwfunメダルコンパス)** は、ドラクエウォークのプレイヤーが小さなメダルの湧き位置を登録・共有できるReact Nativeモバイルアプリです。ユーザーは現在位置でボタンをクリックしてメダル位置を登録でき、登録された位置は全ユーザーがマップ上で閲覧できます。

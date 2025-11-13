@@ -105,6 +105,69 @@ src/
     └── supabase.ts
 ```
 
+## 内部テスター向け配布（Expo Development Build）
+
+### 前提条件
+
+1. **Expoアカウント作成**: [https://expo.dev](https://expo.dev) でアカウント作成
+2. **EAS CLIインストール**: `npm install -g eas-cli`
+3. **Expoログイン**: `eas login`
+
+### ビルド作成手順
+
+#### Androidビルド（APK）
+
+```bash
+# 開発ビルドを作成
+eas build --profile development --platform android
+
+# ビルド完了後、ダウンロードURLが表示されます
+# テスターにURLを共有してAPKをインストールしてもらう
+```
+
+#### iOSビルド（要Apple Developer Program）
+
+```bash
+# 開発ビルドを作成
+eas build --profile development --platform ios
+
+# Ad Hoc配布用：デバイスUDIDを事前に登録する必要があります
+# TestFlight配布用：Apple Developer Programが必要です
+```
+
+### テスターへの配布方法
+
+1. **Androidの場合**:
+   - ビルド完了後に表示されるURLをテスターに共有
+   - テスターは直接APKをダウンロード・インストール
+   - 提供元不明のアプリのインストールを許可する必要あり
+
+2. **iOSの場合（Ad Hoc）**:
+   - テスターのデバイスUDIDを収集
+   - Apple Developer Portalでデバイス登録
+   - ビルド後、TestFlightまたはAd Hoc配布
+
+### 開発ビルドの実行
+
+テスターがアプリをインストール後：
+
+1. **Expo Goアプリは不要**: Development Buildは独立したアプリとして動作
+2. **開発サーバーとの接続**:
+   ```bash
+   # 開発者側で開発サーバーを起動
+   npm start
+
+   # テスターは表示されたQRコードをスキャン、または
+   # exp://あなたのIPアドレス:8081 に接続
+   ```
+3. **本番環境のテスト**: 開発サーバーなしでもSupabaseに直接接続可能
+
+### ビルドプロファイル（eas.json）
+
+- **development**: 開発ビルド、内部テスト用
+- **preview**: プレビュービルド、内部テスト用
+- **production**: 本番リリース用（App Store/Google Play）
+
 ## ドキュメント
 
 詳細な設計書は`documents/`フォルダを参照してください。

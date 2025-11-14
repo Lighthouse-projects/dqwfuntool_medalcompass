@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import CoinSvg from '../../../assets/coin.svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 interface MedalMarkerProps {
   isOwnMedal: boolean; // 自分のメダルかどうか
@@ -7,31 +9,26 @@ interface MedalMarkerProps {
 
 /**
  * メダルマーカーのカスタムビューコンポーネント
- * 自分のメダル: 銀色 (#9E9E9E)
- * 他人のメダル: 黄色 (#FFC107)
+ * coin.svgを使用
+ * 自分のメダル・他人のメダル共に金色で表示
  */
 export const MedalMarker: React.FC<MedalMarkerProps> = ({ isOwnMedal }) => {
+  // 自分のメダルも他人のメダルも金色のSVG（デフォルト）
   return (
-    <View
-      style={[
-        styles.marker,
-        { backgroundColor: isOwnMedal ? '#9E9E9E' : '#FFC107' },
-      ]}
-    />
+    <View style={styles.container}>
+      <CoinSvg width="20" height="20" />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  marker: {
-    width: 40,
-    height: 40,
-    borderRadius: 20, // 円形
-    borderWidth: 3,
-    borderColor: '#FFFFFF', // 白い縁取り
+  container: {
+    width: 20,
+    height: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5, // Android用の影
+    shadowRadius: 2,
+    elevation: 3, // Android用の影
   },
 });

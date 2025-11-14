@@ -533,10 +533,4 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
   },
-  loadingText: {
-    fontSize: 12,
-    color: '#1E88E5',
-    marginTop: 8,
-    textAlign: 'center',
-  },
 });

@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { TextInput } from '../components/common/TextInput';
 import { Button } from '../components/common/Button';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,7 +17,6 @@ import {
   validateEmail,
   validatePassword,
   validatePasswordConfirm,
-  validateTermsAgreement,
 } from '../utils/validation';
 
 interface SignUpScreenProps {
@@ -28,7 +28,6 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordConfirmError, setPasswordConfirmError] = useState<string | null>(null);
@@ -40,18 +39,12 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
     const emailValidation = validateEmail(email);
     const passwordValidation = validatePassword(password);
     const passwordConfirmValidation = validatePasswordConfirm(password, passwordConfirm);
-    const termsValidation = validateTermsAgreement(agreedToTerms);
 
     setEmailError(emailValidation);
     setPasswordError(passwordValidation);
     setPasswordConfirmError(passwordConfirmValidation);
 
     if (emailValidation || passwordValidation || passwordConfirmValidation) {
-      return;
-    }
-
-    if (termsValidation) {
-      Alert.alert('エラー', termsValidation);
       return;
     }
 
@@ -77,15 +70,16 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.content}>
           {/* ヘッダー */}
           <View style={styles.header}>
             <TouchableOpacity
@@ -141,28 +135,17 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
             error={passwordConfirmError}
           />
 
-          {/* 利用規約同意チェックボックス */}
-          <TouchableOpacity
-            style={styles.checkboxContainer}
-            onPress={() => setAgreedToTerms(!agreedToTerms)}
-          >
-            <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
-              {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
-            </View>
-            <Text style={styles.checkboxLabel}>利用規約に同意する</Text>
-          </TouchableOpacity>
-
           {/* 登録ボタン */}
           <Button
             title="登録"
             onPress={handleSignUp}
             loading={loading}
-            disabled={!agreedToTerms}
             style={styles.signUpButton}
           />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -196,35 +179,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#212121',
   },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderWidth: 2,
-    borderColor: '#757575',
-    borderRadius: 4,
-    marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: '#1E88E5',
-    borderColor: '#1E88E5',
-  },
-  checkmark: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  checkboxLabel: {
-    fontSize: 14,
-    color: '#212121',
-  },
   signUpButton: {
-    marginTop: 8,
+    marginTop: 24,
   },
 });

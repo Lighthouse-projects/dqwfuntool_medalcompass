@@ -2,13 +2,13 @@
   "expo": {
     "name": "dqwfun-medalcompass",
     "slug": "dqwfun-medalcompass",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/medal-icon-1024.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/medal-icon-512.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -21,8 +21,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/medal-icon-512.png",
+        "backgroundColor": "#FFC107"
       },
       "package": "com.lighthouseprojects.medalcompass",
       "edgeToEdgeEnabled": true,

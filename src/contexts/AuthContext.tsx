@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useContext, ReactNode } from
 import { AuthContextType, AuthState } from '../types/auth';
 import { supabase } from '../lib/supabase';
 import { AuthError } from '@supabase/supabase-js';
+import { getRememberMeStatus, clearCredentials } from '../utils/secureStorage';
 
 // AuthContextの作成
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -101,6 +102,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }));
+
+      // 記憶機能がOFFの場合、保存情報をクリア
+      const rememberMe = await getRememberMeStatus();
+      if (!rememberMe) {
+        await clearCredentials();
+      }
 
       const { error } = await supabase.auth.signOut();
 

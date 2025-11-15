@@ -25,7 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 このプロジェクトは**実装完了**しています。以下の全機能が実装済みです：
 
 - ✅ **F001: ユーザー認証・登録** - ログイン、新規登録、パスワードリセット
-- ✅ **F002: メダル登録** - GPS座標取得、5m重複チェック、測位精度警告
+- ✅ **F002: メダル登録** - GPS座標取得、測位精度警告
 - ✅ **F003: メダル表示** - react-native-maps、色分け表示、現在地中心、手動再読み込み
 - ✅ **F004: メダル削除** - 自分のメダル削除、確認ダイアログ
 - ✅ **F005: マップ操作** - ピンチズーム、スワイプ、現在地ボタン
@@ -81,8 +81,7 @@ eas build --platform all
 1. **データ読み取り**: クライアントからPostgreSQLへ直接SELECT（全員閲覧可能）
 2. **データ書き込み**: クライアントから直接INSERT、RLSで`auth.uid() = user_id`を検証
 3. **データ削除**: クライアントから直接DELETE、RLSで`auth.uid() = user_id`を検証
-4. **5メートル重複チェック**: クライアント側でHaversine距離計算
-5. **誤メダル通報**: クライアントから直接medal_reportsテーブルへINSERT、RLSで認証制御
+4. **誤メダル通報**: クライアントから直接medal_reportsテーブルへINSERT、RLSで認証制御
 
 ### フロントエンドアーキテクチャ（予定）
 - **フレームワーク**: React Native + Expo
@@ -126,7 +125,6 @@ eas build --platform all
 - **medal_reports DELETE/UPDATE**: 不可（通報は取り消し不可）
 
 **重要な制約・ロジック**:
-- 既存メダルの5メートル以内に重複登録不可（クライアント側でチェック）
 - 5通報でメダル無効化（is_deleted = true）
 - 10通報でユーザーBAN（ユーザーの全メダルをis_deleted = true）
 
@@ -153,12 +151,7 @@ eas build --platform all
 ### メダル登録ロジック（F001）
 1. ユーザーが「登録」ボタンをタップ
 2. アプリが現在のGPS座標を取得
-3. **クライアント側で5メートル重複チェック**:
-   - 周辺メダルを取得: `.eq('is_deleted', false)`で有効なメダルのみ
-   - Haversine距離計算で5メートル以内のメダルが存在するかチェック
-   - Yes → エラー表示、登録を防止
-   - No → ステップ4へ進む
-4. **クライアントから直接INSERT**:
+3. **クライアントから直接INSERT**:
    ```typescript
    await supabase.from('medals').insert([{
      user_id: supabase.auth.user().id,
@@ -166,7 +159,7 @@ eas build --platform all
      longitude: newLongitude
    }])
    ```
-5. **RLSが自動検証**: `auth.uid() = user_id`をチェック、不正なuser_idは自動拒否
+4. **RLSが自動検証**: `auth.uid() = user_id`をチェック、不正なuser_idは自動拒否
 
 ### メダル表示ロジック（F003）
 - **全ユーザーのメダルをマップ上に表示**: `.eq('is_deleted', false)`で有効なメダルのみ表示

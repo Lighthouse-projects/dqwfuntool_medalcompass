@@ -4,7 +4,9 @@
       "Bash(pip show:*)",
       "Bash(python resize_icon.py:*)",
       "Bash(git commit:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

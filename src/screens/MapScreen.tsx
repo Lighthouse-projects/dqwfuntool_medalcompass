@@ -6,7 +6,7 @@ import { Button } from '../components/common/Button';
 import { MedalMarker } from '../components/map/MedalMarker';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from '../hooks/useLocation';
-import { registerMedal, checkDuplicateWithin5Meters, getMedalsWithinRadius, deleteMedal, reportMedal, getMedalReportCount, hasUserReportedMedal, checkAndInvalidateMedal, checkAndBanUser } from '../services/medalService';
+import { registerMedal, getMedalsWithinRadius, deleteMedal, reportMedal, getMedalReportCount, hasUserReportedMedal, checkAndInvalidateMedal, checkAndBanUser } from '../services/medalService';
 import { isAccuracyGoodEnough } from '../utils/location';
 import { Medal } from '../types/medal';
 
@@ -183,24 +183,13 @@ export const MapScreen: React.FC = () => {
         }
       }
 
-      // 4. 5メートル重複チェック
-      const hasDuplicate = await checkDuplicateWithin5Meters(latitude, longitude);
-      if (hasDuplicate) {
-        Alert.alert(
-          '登録できません',
-          '5メートル以内に既に登録されているメダルがあります。'
-        );
-        setRegistering(false);
-        return;
-      }
-
-      // 5. メダル登録
+      // 4. メダル登録
       const newMedal = await registerMedal(user.id, latitude, longitude);
 
-      // 6. メダルリストに追加（即座に反映）
+      // 5. メダルリストに追加（即座に反映）
       setMedals((prev) => [...prev, newMedal]);
 
-      // 7. 成功通知
+      // 6. 成功通知
       Alert.alert('成功', '✅ メダルを登録しました', [{ text: 'OK' }]);
 
     } catch (error) {

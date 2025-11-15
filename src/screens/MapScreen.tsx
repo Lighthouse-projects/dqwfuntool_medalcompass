@@ -6,9 +6,12 @@ import { Button } from '../components/common/Button';
 import { MedalMarker } from '../components/map/MedalMarker';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from '../hooks/useLocation';
-import { registerMedal, getMedalsWithinRadius, deleteMedal, reportMedal, getMedalReportCount, hasUserReportedMedal, checkAndInvalidateMedal, checkAndBanUser } from '../services/medalService';
+import { registerMedal, getMedalsWithinRadius, deleteMedal, reportMedal, getMedalReportCount, hasUserReportedMedal, checkAndInvalidateMedal, checkAndBanUser, getUserCollections, collectMedal, uncollectMedal } from '../services/medalService';
 import { isAccuracyGoodEnough } from '../utils/location';
-import { Medal } from '../types/medal';
+import { Medal, MedalCollection } from '../types/medal';
+
+// モード定義
+type AppMode = 'registration' | 'exploration';
 
 export const MapScreen: React.FC = () => {
   const { signOut, user } = useAuth();
@@ -19,6 +22,15 @@ export const MapScreen: React.FC = () => {
   const [mapInitialized, setMapInitialized] = useState(false);
   const mapRef = useRef<MapView>(null);
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // モード状態管理（初期表示は探検モード）
+  const [mode, setMode] = useState<AppMode>('exploration');
+
+  // 獲得済みメダルリスト（探検モード用）
+  const [collectedMedals, setCollectedMedals] = useState<Set<number>>(new Set());
+
+  // 長押し時の仮メダル位置
+  const [tempMedalPosition, setTempMedalPosition] = useState<{ latitude: number; longitude: number } | null>(null);
 
   // 初期表示位置: 現在地を中心に半径1km
   const [region, setRegion] = useState<Region | null>(null);
@@ -60,6 +72,25 @@ export const MapScreen: React.FC = () => {
 
     initializeMap();
   }, []);
+
+  /**
+   * ユーザーの獲得済みメダルリストを読み込み（探検モード用）
+   */
+  useEffect(() => {
+    const loadCollectedMedals = async () => {
+      if (!user) return;
+
+      try {
+        const collections = await getUserCollections(user.id);
+        const medalNos = new Set(collections.map((c) => c.medal_no));
+        setCollectedMedals(medalNos);
+      } catch (error) {
+        console.error('Load collected medals error:', error);
+      }
+    };
+
+    loadCollectedMedals();
+  }, [user]);
 
   /**
    * 指定座標周辺のメダルを取得（半径5km）
@@ -116,7 +147,7 @@ export const MapScreen: React.FC = () => {
   };
 
   /**
-   * メダル登録処理
+   * メダル登録処理（現在地）
    */
   const handleRegisterMedal = async () => {
     if (!user) {
@@ -201,6 +232,115 @@ export const MapScreen: React.FC = () => {
   };
 
   /**
+   * 地図長押し時のメダル登録処理
+   */
+  const handleMapLongPress = async (event: any) => {
+    // 探検モードでは長押し登録不可
+    if (mode === 'exploration') {
+      return;
+    }
+
+    if (!user) {
+      Alert.alert('エラー', 'ログインしてください');
+      return;
+    }
+
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+
+    // 仮メダル位置を地図に表示
+    setTempMedalPosition({ latitude, longitude });
+
+    // 確認ダイアログ表示
+    Alert.alert(
+      'メダルを登録',
+      'この位置にメダルを登録しますか？',
+      [
+        {
+          text: 'キャンセル',
+          style: 'cancel',
+          onPress: () => {
+            // キャンセル時は仮マーカーを削除
+            setTempMedalPosition(null);
+          },
+        },
+        {
+          text: '登録する',
+          onPress: async () => {
+            setRegistering(true);
+            try {
+              // メダル登録
+              const newMedal = await registerMedal(user.id, latitude, longitude);
+
+              // メダルリストに追加（即座に反映）
+              setMedals((prev) => [...prev, newMedal]);
+
+              // 仮マーカーを削除
+              setTempMedalPosition(null);
+
+              // 成功通知
+              Alert.alert('成功', '✅ メダルを登録しました', [{ text: 'OK' }]);
+            } catch (error) {
+              console.error('Register medal error:', error);
+              Alert.alert('エラー', (error as Error).message);
+              // エラー時も仮マーカーを削除
+              setTempMedalPosition(null);
+            } finally {
+              setRegistering(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  /**
+   * モード切替
+   */
+  const handleToggleMode = () => {
+    setMode((prevMode) => (prevMode === 'registration' ? 'exploration' : 'registration'));
+  };
+
+  /**
+   * メダル獲得処理（探検モード）
+   */
+  const handleCollectMedal = async (medal: Medal) => {
+    if (!user) {
+      Alert.alert('エラー', 'ログインしてください');
+      return;
+    }
+
+    try {
+      await collectMedal(user.id, medal.medal_no);
+      setCollectedMedals((prev) => new Set(prev).add(medal.medal_no));
+      Alert.alert('成功', '✅ メダルを獲得しました');
+    } catch (error) {
+      console.error('Collect medal error:', error);
+      Alert.alert('エラー', (error as Error).message);
+    }
+  };
+
+  /**
+   * メダル獲得キャンセル処理（探検モード）
+   */
+  const handleUncollectMedal = async (medal: Medal) => {
+    if (!user) {
+      Alert.alert('エラー', 'ログインしてください');
+      return;
+    }
+
+    try {
+      await uncollectMedal(user.id, medal.medal_no);
+      const newSet = new Set(collectedMedals);
+      newSet.delete(medal.medal_no);
+      setCollectedMedals(newSet);
+      Alert.alert('成功', 'メダル獲得をキャンセルしました');
+    } catch (error) {
+      console.error('Uncollect medal error:', error);
+      Alert.alert('エラー', (error as Error).message);
+    }
+  };
+
+  /**
    * マーカータップ時の処理
    */
   const handleMarkerPress = async (medal: Medal) => {
@@ -215,6 +355,28 @@ export const MapScreen: React.FC = () => {
       return `${year}-${month}-${day}`;
     };
 
+    // 探検モード: 獲得/獲得キャンセル処理
+    if (mode === 'exploration') {
+      const isCollected = collectedMedals.has(medal.medal_no);
+
+      Alert.alert(
+        isCollected ? '獲得済みメダル' : 'メダル',
+        `登録日: ${formatDate(medal.created_at)}`,
+        [
+          {
+            text: 'キャンセル',
+            style: 'cancel',
+          },
+          {
+            text: isCollected ? '獲得をキャンセル' : '獲得する',
+            onPress: () => isCollected ? handleUncollectMedal(medal) : handleCollectMedal(medal),
+          },
+        ]
+      );
+      return;
+    }
+
+    // 登録モード: 削除または通報処理
     if (isOwn) {
       // 自分のメダル: 削除オプションを表示
       Alert.alert(
@@ -377,12 +539,31 @@ export const MapScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      {/* モード切替ボタン（上部中央） */}
+      <View style={styles.modeToggleContainer}>
+        <TouchableOpacity
+          style={[
+            styles.modeToggleButton,
+            mode === 'registration' && styles.modeToggleButtonActive
+          ]}
+          onPress={handleToggleMode}
+        >
+          <Text style={[
+            styles.modeToggleText,
+            mode === 'registration' && styles.modeToggleTextActive
+          ]}>
+            {mode === 'registration' ? '📍 登録モード' : '🗺️ 探検モード'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       {/* マップビュー */}
       <MapView
         ref={mapRef}
         style={styles.map}
         initialRegion={region}
         onRegionChangeComplete={handleRegionChangeComplete}
+        onLongPress={handleMapLongPress}
         showsUserLocation={true}
         showsMyLocationButton={false} // カスタムボタンを使用
         loadingEnabled={true}
@@ -397,9 +578,22 @@ export const MapScreen: React.FC = () => {
             }}
             onPress={() => handleMarkerPress(medal)}
           >
-            <MedalMarker isOwnMedal={medal.user_id === user?.id} />
+            <MedalMarker
+              isOwnMedal={medal.user_id === user?.id}
+              mode={mode}
+              isCollected={collectedMedals.has(medal.medal_no)}
+            />
           </Marker>
         ))}
+
+        {/* 長押し時の仮メダルマーカー */}
+        {tempMedalPosition && (
+          <Marker
+            coordinate={tempMedalPosition}
+            pinColor="#FF9800"
+            opacity={0.7}
+          />
+        )}
       </MapView>
 
       {/* 現在地ボタン（右下） */}
@@ -414,16 +608,19 @@ export const MapScreen: React.FC = () => {
       {/* 下部コントロールエリア */}
       <View style={styles.bottomControls}>
         <View style={styles.buttonContainer}>
-          <Button
-            title="📍 メダルを登録"
-            onPress={handleRegisterMedal}
-            loading={registering || location.loading}
-            style={styles.registerButton}
-          />
+          {/* 登録モードでのみメダル登録ボタンを表示 */}
+          {mode === 'registration' && (
+            <Button
+              title="📍 メダルを登録"
+              onPress={handleRegisterMedal}
+              loading={registering || location.loading}
+              style={styles.registerButton}
+            />
+          )}
 
           <View style={styles.horizontalButtons}>
             <Button
-              title="🔄 再読込"
+              title="🔄 メダル再読込"
               onPress={handleRefreshMedals}
               loading={loadingMedals}
               variant="secondary"
@@ -468,6 +665,39 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  modeToggleContainer: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    alignItems: 'center',
+  },
+  modeToggleButton: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  modeToggleButtonActive: {
+    backgroundColor: '#1E88E5',
+    borderColor: '#1976D2',
+  },
+  modeToggleText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#424242',
+  },
+  modeToggleTextActive: {
+    color: '#FFFFFF',
   },
   currentLocationButton: {
     position: 'absolute',

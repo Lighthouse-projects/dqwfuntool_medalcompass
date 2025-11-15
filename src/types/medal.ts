@@ -34,7 +34,7 @@ export interface LocationState {
 
 // メダル通報の型定義
 export interface MedalReport {
-  id: number;                          // 通報ID（連番、主キー）
+  report_id: number;                   // 通報ID（連番、主キー）
   medal_no: number;                    // メダル番号
   reporter_user_id: string;            // 通報者のユーザーID
   created_at: string;                  // 通報日時
@@ -44,4 +44,18 @@ export interface MedalReport {
 export interface MedalReportInsertInput {
   medal_no: number;
   reporter_user_id: string;
+}
+
+// メダル獲得履歴の型定義
+export interface MedalCollection {
+  collection_id: number;               // 獲得ID（連番、主キー）
+  user_id: string;                     // 獲得したユーザーID
+  medal_no: number;                    // 獲得したメダル番号
+  collected_at: string;                // 獲得日時
+}
+
+// メダル獲得登録用の型
+export interface MedalCollectionInsertInput {
+  user_id: string;
+  medal_no: number;
 }

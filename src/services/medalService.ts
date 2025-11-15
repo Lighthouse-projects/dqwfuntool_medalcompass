@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { Medal, MedalInsertInput, MedalReport, MedalReportInsertInput } from '../types/medal';
+import { Medal, MedalInsertInput, MedalReport, MedalReportInsertInput, MedalCollection, MedalCollectionInsertInput } from '../types/medal';
 import { calculateDistance, calculateBoundingBox } from '../utils/location';
 
 /**
@@ -202,7 +202,7 @@ export async function hasUserReportedMedal(
   try {
     const { data, error } = await supabase
       .from('medal_reports')
-      .select('id')
+      .select('report_id')
       .eq('medal_no', medalNo)
       .eq('reporter_user_id', userId)
       .limit(1);
@@ -318,6 +318,134 @@ export async function checkAndBanUser(userId: string): Promise<void> {
     }
   } catch (error) {
     console.error('Check and ban user error:', error);
+    throw error;
+  }
+}
+
+// ========================================
+// メダル獲得関連の機能
+// ========================================
+
+/**
+ * メダルを獲得（探検モード）
+ * @param userId ユーザーID
+ * @param medalNo メダル番号
+ * @returns 獲得レコード
+ */
+export async function collectMedal(
+  userId: string,
+  medalNo: number
+): Promise<MedalCollection> {
+  try {
+    const collectionData: MedalCollectionInsertInput = {
+      user_id: userId,
+      medal_no: medalNo,
+    };
+
+    const { data, error } = await supabase
+      .from('medal_collections')
+      .insert(collectionData)
+      .select()
+      .single();
+
+    if (error) {
+      // UNIQUE制約エラー（既に獲得済み）の場合
+      if (error.code === '23505') {
+        throw new Error('既に獲得済みです');
+      }
+      console.error('Collect medal error:', error);
+      throw new Error('獲得に失敗しました。再度お試しください。');
+    }
+
+    if (!data) {
+      throw new Error('獲得に失敗しました。');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Collect medal error:', error);
+    throw error;
+  }
+}
+
+/**
+ * メダルの獲得をキャンセル（探検モード）
+ * @param userId ユーザーID
+ * @param medalNo メダル番号
+ * @returns void
+ */
+export async function uncollectMedal(
+  userId: string,
+  medalNo: number
+): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('medal_collections')
+      .delete()
+      .eq('user_id', userId)
+      .eq('medal_no', medalNo);
+
+    if (error) {
+      console.error('Uncollect medal error:', error);
+      throw new Error('獲得キャンセルに失敗しました。再度お試しください。');
+    }
+  } catch (error) {
+    console.error('Uncollect medal error:', error);
+    throw error;
+  }
+}
+
+/**
+ * ユーザーの獲得メダル一覧を取得
+ * @param userId ユーザーID
+ * @returns 獲得メダル配列
+ */
+export async function getUserCollections(userId: string): Promise<MedalCollection[]> {
+  try {
+    const { data, error } = await supabase
+      .from('medal_collections')
+      .select('*')
+      .eq('user_id', userId)
+      .order('collected_at', { ascending: false });
+
+    if (error) {
+      console.error('Get user collections error:', error);
+      throw new Error('獲得メダル一覧の取得に失敗しました');
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Get user collections error:', error);
+    throw error;
+  }
+}
+
+/**
+ * ユーザーが特定のメダルを獲得済みかチェック
+ * @param userId ユーザーID
+ * @param medalNo メダル番号
+ * @returns 獲得済みならtrue
+ */
+export async function isMedalCollected(
+  userId: string,
+  medalNo: number
+): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('medal_collections')
+      .select('collection_id')
+      .eq('user_id', userId)
+      .eq('medal_no', medalNo)
+      .limit(1);
+
+    if (error) {
+      console.error('Check medal collected error:', error);
+      throw new Error('獲得状態の確認に失敗しました');
+    }
+
+    return (data && data.length > 0) || false;
+  } catch (error) {
+    console.error('Check medal collected error:', error);
     throw error;
   }
 }

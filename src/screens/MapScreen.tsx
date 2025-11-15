@@ -1,19 +1,29 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Alert, Linking, TouchableOpacity } from 'react-native';
-import MapView, { Marker, Region } from 'react-native-maps';
+import MapView, { Marker, Region, Circle } from 'react-native-maps';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRoute, useNavigation, RouteProp, NavigationProp } from '@react-navigation/native';
 import { Button } from '../components/common/Button';
 import { MedalMarker } from '../components/map/MedalMarker';
+import { HistoryModal } from '../components/map/HistoryModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from '../hooks/useLocation';
 import { registerMedal, getMedalsWithinRadius, deleteMedal, reportMedal, getMedalReportCount, hasUserReportedMedal, checkAndInvalidateMedal, checkAndBanUser, getUserCollections, collectMedal, uncollectMedal } from '../services/medalService';
 import { isAccuracyGoodEnough } from '../utils/location';
 import { Medal, MedalCollection } from '../types/medal';
 import { AppMode, saveAppMode, getAppMode, MapState, saveMapState, getMapState } from '../utils/appStorage';
+import { MainTabParamList } from '../navigation/MainNavigator';
+
+type MapScreenRouteProp = RouteProp<MainTabParamList, 'Map'>;
+type MapScreenNavigationProp = NavigationProp<MainTabParamList, 'Map'>;
 
 export const MapScreen: React.FC = () => {
-  const { signOut, user } = useAuth();
+  const route = useRoute<MapScreenRouteProp>();
+  const navigation = useNavigation<MapScreenNavigationProp>();
+  const { user } = useAuth();
   const location = useLocation();
+  const insets = useSafeAreaInsets();
   const [registering, setRegistering] = useState(false);
   const [medals, setMedals] = useState<Medal[]>([]);
   const [loadingMedals, setLoadingMedals] = useState(false);
@@ -34,6 +44,12 @@ export const MapScreen: React.FC = () => {
   // 初期表示位置: 現在地を中心に半径1km
   const [region, setRegion] = useState<Region | null>(null);
 
+  // 履歴モーダルの表示状態
+  const [historyModalVisible, setHistoryModalVisible] = useState(false);
+
+  // 履歴から選択されたメダルの位置（押下中のみ表示）
+  const [highlightedMedalPosition, setHighlightedMedalPosition] = useState<{ latitude: number; longitude: number } | null>(null);
+
   /**
    * 保存されているモードを復元
    */
@@ -45,6 +61,26 @@ export const MapScreen: React.FC = () => {
 
     restoreMode();
   }, []);
+
+  /**
+   * ナビゲーションパラメータから履歴モーダルを開く
+   */
+  useEffect(() => {
+    if (route.params?.openHistory) {
+      setHistoryModalVisible(true);
+    }
+  }, [route.params?.openHistory]);
+
+  /**
+   * 履歴モーダルを閉じる
+   */
+  const handleCloseHistoryModal = useCallback(() => {
+    setHistoryModalVisible(false);
+    // ナビゲーションパラメータをリセット
+    if (route.params?.openHistory) {
+      navigation.setParams({ openHistory: undefined });
+    }
+  }, [navigation, route.params?.openHistory]);
 
   /**
    * 初期表示: 保存されたマップ状態 > 現在地 > デフォルト（東京）の優先順位で設定
@@ -579,15 +615,40 @@ export const MapScreen: React.FC = () => {
   };
 
   /**
-   * ログアウト処理
+   * 履歴からメダルをタップ（地図に移動）
    */
-  const handleLogout = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('Logout error:', error);
+  const handleHistoryMedalPress = useCallback((medalNo: number) => {
+    const targetMedal = medals.find((m) => m.medal_no === medalNo);
+    if (targetMedal && mapRef.current) {
+      const newRegion: Region = {
+        latitude: targetMedal.latitude,
+        longitude: targetMedal.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      };
+      mapRef.current.animateToRegion(newRegion, 500);
     }
-  };
+  }, [medals]);
+
+  /**
+   * 履歴からメダルを押下（地図上でハイライト表示）
+   */
+  const handleHistoryMedalPressIn = useCallback((medalNo: number) => {
+    const targetMedal = medals.find((m) => m.medal_no === medalNo);
+    if (targetMedal) {
+      setHighlightedMedalPosition({
+        latitude: targetMedal.latitude,
+        longitude: targetMedal.longitude,
+      });
+    }
+  }, [medals]);
+
+  /**
+   * 履歴からメダルの押下解除（ハイライト消去）
+   */
+  const handleHistoryMedalPressOut = useCallback(() => {
+    setHighlightedMedalPosition(null);
+  }, []);
 
   // 現在地取得中はローディング表示
   if (!mapInitialized || !region) {
@@ -655,6 +716,17 @@ export const MapScreen: React.FC = () => {
             opacity={0.7}
           />
         )}
+
+        {/* 履歴から選択されたメダルのハイライト表示 */}
+        {highlightedMedalPosition && (
+          <Circle
+            center={highlightedMedalPosition}
+            radius={50}
+            fillColor="rgba(30, 136, 229, 0.3)"
+            strokeColor="rgba(30, 136, 229, 0.8)"
+            strokeWidth={2}
+          />
+        )}
       </MapView>
 
       {/* 現在地ボタン（右下） */}
@@ -666,45 +738,45 @@ export const MapScreen: React.FC = () => {
         <MaterialIcons name="my-location" size={28} color="#1E88E5" />
       </TouchableOpacity>
 
-      {/* 下部コントロールエリア */}
-      <View style={styles.bottomControls}>
-        <View style={styles.buttonContainer}>
-          {/* 登録モードでのみメダル登録ボタンを表示 */}
-          {mode === 'registration' && (
+      {/* メダル再読み込みボタン（現在地ボタンの下） */}
+      <TouchableOpacity
+        style={styles.refreshMedalsButton}
+        onPress={handleRefreshMedals}
+        disabled={loadingMedals}
+      >
+        <MaterialIcons name="refresh" size={28} color="#1E88E5" />
+      </TouchableOpacity>
+
+      {/* 下部コントロールエリア（登録モード時のみ表示） */}
+      {mode === 'registration' && (
+        <View style={[styles.bottomControls, { bottom: 60 + insets.bottom }]}>
+          <View style={styles.buttonContainer}>
             <Button
               title="📍 メダルを登録"
               onPress={handleRegisterMedal}
               loading={registering || location.loading}
               style={styles.registerButton}
             />
+          </View>
+
+          {location.error && (
+            <Text style={styles.errorText}>{location.error}</Text>
           )}
 
-          <View style={styles.horizontalButtons}>
-            <Button
-              title="🔄 メダル再読込"
-              onPress={handleRefreshMedals}
-              loading={loadingMedals}
-              variant="secondary"
-              style={styles.refreshButton}
-            />
-
-            <Button
-              title="ログアウト"
-              onPress={handleLogout}
-              variant="secondary"
-              style={styles.logoutButton}
-            />
-          </View>
+          {loadingMedals && (
+            <Text style={styles.loadingText}>メダルを読み込み中...</Text>
+          )}
         </View>
+      )}
 
-        {location.error && (
-          <Text style={styles.errorText}>{location.error}</Text>
-        )}
-
-        {loadingMedals && (
-          <Text style={styles.loadingText}>メダルを読み込み中...</Text>
-        )}
-      </View>
+      {/* 履歴モーダル */}
+      <HistoryModal
+        visible={historyModalVisible}
+        onClose={handleCloseHistoryModal}
+        onMedalPress={handleHistoryMedalPress}
+        onMedalPressIn={handleHistoryMedalPressIn}
+        onMedalPressOut={handleHistoryMedalPressOut}
+      />
     </View>
   );
 };
@@ -776,15 +848,28 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 5,
   },
+  refreshMedalsButton: {
+    position: 'absolute',
+    right: 16,
+    bottom: 130,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
   bottomControls: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
     padding: 16,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
@@ -795,17 +880,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   registerButton: {
-    marginBottom: 8,
-  },
-  horizontalButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  refreshButton: {
-    flex: 1,
-  },
-  logoutButton: {
-    flex: 1,
+    width: '100%',
   },
   errorText: {
     fontSize: 12,

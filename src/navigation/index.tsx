@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { LoginScreen } from '../screens/LoginScreen';
 import { SignUpScreen } from '../screens/SignUpScreen';
 import { PasswordResetScreen } from '../screens/PasswordResetScreen';
-import { MapScreen } from '../screens/MapScreen';
+import { MainNavigator } from './MainNavigator';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 // ナビゲーションの型定義
@@ -15,12 +15,7 @@ export type AuthStackParamList = {
   PasswordReset: undefined;
 };
 
-export type AppStackParamList = {
-  Map: undefined;
-};
-
 const AuthStack = createStackNavigator<AuthStackParamList>();
-const AppStack = createStackNavigator<AppStackParamList>();
 
 // 認証スタック（ログイン前）
 const AuthNavigator = () => (
@@ -33,17 +28,6 @@ const AuthNavigator = () => (
     <AuthStack.Screen name="SignUp" component={SignUpScreen} />
     <AuthStack.Screen name="PasswordReset" component={PasswordResetScreen} />
   </AuthStack.Navigator>
-);
-
-// アプリスタック（ログイン後）
-const AppNavigator = () => (
-  <AppStack.Navigator
-    screenOptions={{
-      headerShown: false,
-    }}
-  >
-    <AppStack.Screen name="Map" component={MapScreen} />
-  </AppStack.Navigator>
 );
 
 // ルートナビゲーター
@@ -61,7 +45,7 @@ export const RootNavigator = () => {
 
   return (
     <NavigationContainer>
-      {user ? <AppNavigator /> : <AuthNavigator />}
+      {user ? <MainNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
 };

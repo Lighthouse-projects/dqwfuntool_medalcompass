@@ -9,7 +9,7 @@ import { useLocation } from '../hooks/useLocation';
 import { registerMedal, getMedalsWithinRadius, deleteMedal, reportMedal, getMedalReportCount, hasUserReportedMedal, checkAndInvalidateMedal, checkAndBanUser, getUserCollections, collectMedal, uncollectMedal } from '../services/medalService';
 import { isAccuracyGoodEnough } from '../utils/location';
 import { Medal, MedalCollection } from '../types/medal';
-import { AppMode, saveAppMode, getAppMode } from '../utils/appStorage';
+import { AppMode, saveAppMode, getAppMode, MapState, saveMapState, getMapState } from '../utils/appStorage';
 
 export const MapScreen: React.FC = () => {
   const { signOut, user } = useAuth();
@@ -20,6 +20,7 @@ export const MapScreen: React.FC = () => {
   const [mapInitialized, setMapInitialized] = useState(false);
   const mapRef = useRef<MapView>(null);
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveMapStateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // モード状態管理（初期表示は探検モード）
   const [mode, setMode] = useState<AppMode>('exploration');
@@ -46,10 +47,30 @@ export const MapScreen: React.FC = () => {
   }, []);
 
   /**
-   * 初期表示: 現在地を取得してマップ中心に設定
+   * 初期表示: 保存されたマップ状態 > 現在地 > デフォルト（東京）の優先順位で設定
    */
   useEffect(() => {
     const initializeMap = async () => {
+      // 1. 保存されたマップ状態を確認
+      const savedMapState = await getMapState();
+
+      if (savedMapState) {
+        // 保存された位置がある場合はそれを使用（GPS取得をスキップ）
+        const newRegion: Region = {
+          latitude: savedMapState.latitude,
+          longitude: savedMapState.longitude,
+          latitudeDelta: savedMapState.latitudeDelta,
+          longitudeDelta: savedMapState.longitudeDelta,
+        };
+        setRegion(newRegion);
+        setMapInitialized(true);
+
+        // 保存された位置周辺のメダルを取得
+        fetchMedalsInRegion(savedMapState.latitude, savedMapState.longitude);
+        return;
+      }
+
+      // 2. 保存された位置がない場合は現在地を取得
       const result = await location.getCurrentLocation();
 
       if (result.success && result.coordinates) {
@@ -68,7 +89,7 @@ export const MapScreen: React.FC = () => {
           result.coordinates.longitude
         );
       } else {
-        // 現在地取得失敗時はデフォルト（東京）を使用
+        // 3. 現在地取得失敗時はデフォルト（東京）を使用
         const fallbackRegion: Region = {
           latitude: 35.681236,
           longitude: 139.767125,
@@ -103,6 +124,18 @@ export const MapScreen: React.FC = () => {
   }, [user]);
 
   /**
+   * クリーンアップ: タイマーをクリア
+   */
+  useEffect(() => {
+    return () => {
+      if (saveMapStateTimeoutRef.current) {
+        clearTimeout(saveMapStateTimeoutRef.current);
+      }
+    };
+  }, []);
+
+
+  /**
    * 指定座標周辺のメダルを取得（半径5km）
    */
   const fetchMedalsInRegion = async (lat: number, lon: number) => {
@@ -118,11 +151,27 @@ export const MapScreen: React.FC = () => {
   };
 
   /**
-   * マップ範囲変更時の処理
+   * マップ範囲変更時の処理（1秒デバウンスでマップ状態を保存）
    */
   const handleRegionChangeComplete = useCallback((newRegion: Region) => {
     setRegion(newRegion);
     // 自動再読み込みは無効化（手動の「メダル再読み込み」ボタンで取得）
+
+    // 既存のタイマーをクリア
+    if (saveMapStateTimeoutRef.current) {
+      clearTimeout(saveMapStateTimeoutRef.current);
+    }
+
+    // 1秒後にマップ状態を保存（ユーザーが操作を止めてから保存）
+    saveMapStateTimeoutRef.current = setTimeout(() => {
+      const mapState: MapState = {
+        latitude: newRegion.latitude,
+        longitude: newRegion.longitude,
+        latitudeDelta: newRegion.latitudeDelta,
+        longitudeDelta: newRegion.longitudeDelta,
+      };
+      saveMapState(mapState);
+    }, 1000);
   }, []);
 
   /**

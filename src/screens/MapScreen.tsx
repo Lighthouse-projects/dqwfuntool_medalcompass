@@ -1,16 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, Linking, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import MapView, { Marker, Region, Circle } from 'react-native-maps';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp, NavigationProp } from '@react-navigation/native';
-import { Button } from '../components/common/Button';
 import { MedalMarker } from '../components/map/MedalMarker';
-import { HistoryModal } from '../components/map/HistoryModal';
+import { HistoryPanel } from '../components/map/HistoryPanel';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from '../hooks/useLocation';
 import { registerMedal, getMedalsWithinRadius, deleteMedal, reportMedal, getMedalReportCount, hasUserReportedMedal, checkAndInvalidateMedal, checkAndBanUser, getUserCollections, collectMedal, uncollectMedal } from '../services/medalService';
-import { isAccuracyGoodEnough } from '../utils/location';
 import { Medal, MedalCollection } from '../types/medal';
 import { AppMode, saveAppMode, getAppMode, MapState, saveMapState, getMapState } from '../utils/appStorage';
 import { MainTabParamList } from '../navigation/MainNavigator';
@@ -23,8 +20,6 @@ export const MapScreen: React.FC = () => {
   const navigation = useNavigation<MapScreenNavigationProp>();
   const { user } = useAuth();
   const location = useLocation();
-  const insets = useSafeAreaInsets();
-  const [registering, setRegistering] = useState(false);
   const [medals, setMedals] = useState<Medal[]>([]);
   const [loadingMedals, setLoadingMedals] = useState(false);
   const [mapInitialized, setMapInitialized] = useState(false);
@@ -63,7 +58,7 @@ export const MapScreen: React.FC = () => {
   }, []);
 
   /**
-   * ナビゲーションパラメータから履歴モーダルを開く
+   * ナビゲーションパラメータから履歴パネルを開く
    */
   useEffect(() => {
     if (route.params?.openHistory) {
@@ -72,7 +67,18 @@ export const MapScreen: React.FC = () => {
   }, [route.params?.openHistory]);
 
   /**
-   * 履歴モーダルを閉じる
+   * ナビゲーションパラメータから履歴パネルをトグル
+   */
+  useEffect(() => {
+    if (route.params?.toggleHistory) {
+      setHistoryModalVisible((prev) => !prev);
+      // パラメータをリセット
+      navigation.setParams({ toggleHistory: undefined });
+    }
+  }, [route.params?.toggleHistory, navigation]);
+
+  /**
+   * 履歴パネルを閉じる
    */
   const handleCloseHistoryModal = useCallback(() => {
     setHistoryModalVisible(false);
@@ -242,91 +248,6 @@ export const MapScreen: React.FC = () => {
   };
 
   /**
-   * メダル登録処理（現在地）
-   */
-  const handleRegisterMedal = async () => {
-    if (!user) {
-      Alert.alert('エラー', 'ログインしてください');
-      return;
-    }
-
-    setRegistering(true);
-
-    try {
-      // 1. 位置情報パーミッションチェック
-      if (!location.hasPermission) {
-        const granted = await location.requestPermission();
-        if (!granted) {
-          Alert.alert(
-            '位置情報が必要です',
-            'メダルを登録するには位置情報の利用を許可してください。',
-            [
-              { text: 'キャンセル', style: 'cancel' },
-              {
-                text: '設定を開く',
-                onPress: () => Linking.openSettings()
-              },
-            ]
-          );
-          setRegistering(false);
-          return;
-        }
-      }
-
-      // 2. GPS座標取得
-      const result = await location.getCurrentLocation();
-      if (!result.success || !result.coordinates) {
-        Alert.alert('エラー', '現在地を取得できませんでした。再度お試しください。');
-        setRegistering(false);
-        return;
-      }
-
-      const { latitude, longitude, accuracy } = result.coordinates;
-
-      // 3. 測位精度チェック
-      if (!isAccuracyGoodEnough(accuracy)) {
-        const proceed = await new Promise<boolean>((resolve) => {
-          Alert.alert(
-            '測位精度が低いです',
-            `現在の測位精度: ${accuracy?.toFixed(0) || '不明'}m\n登録を続けますか？`,
-            [
-              {
-                text: 'キャンセル',
-                style: 'cancel',
-                onPress: () => resolve(false),
-              },
-              {
-                text: '登録する',
-                onPress: () => resolve(true),
-              },
-            ]
-          );
-        });
-
-        if (!proceed) {
-          setRegistering(false);
-          return;
-        }
-      }
-
-      // 4. メダル登録
-      const newMedal = await registerMedal(user.id, latitude, longitude);
-
-      // 5. メダルリストに追加（即座に反映）
-      setMedals((prev) => [...prev, newMedal]);
-
-      // 6. 成功通知
-      Alert.alert('成功', '✅ メダルを登録しました', [{ text: 'OK' }]);
-
-    } catch (error) {
-      console.error('Register medal error:', error);
-      Alert.alert('エラー', (error as Error).message);
-    } finally {
-      setRegistering(false);
-    }
-  };
-
-  /**
    * 地図長押し時のメダル登録処理
    */
   const handleMapLongPress = async (event: any) => {
@@ -361,7 +282,6 @@ export const MapScreen: React.FC = () => {
         {
           text: '登録する',
           onPress: async () => {
-            setRegistering(true);
             try {
               // メダル登録
               const newMedal = await registerMedal(user.id, latitude, longitude);
@@ -379,8 +299,6 @@ export const MapScreen: React.FC = () => {
               Alert.alert('エラー', (error as Error).message);
               // エラー時も仮マーカーを削除
               setTempMedalPosition(null);
-            } finally {
-              setRegistering(false);
             }
           },
         },
@@ -620,15 +538,16 @@ export const MapScreen: React.FC = () => {
   const handleHistoryMedalPress = useCallback((medalNo: number) => {
     const targetMedal = medals.find((m) => m.medal_no === medalNo);
     if (targetMedal && mapRef.current) {
+      // 現在のズームレベルを保持したまま位置だけ移動
       const newRegion: Region = {
         latitude: targetMedal.latitude,
         longitude: targetMedal.longitude,
-        latitudeDelta: 0.005,
-        longitudeDelta: 0.005,
+        latitudeDelta: region?.latitudeDelta || 0.01,
+        longitudeDelta: region?.longitudeDelta || 0.01,
       };
       mapRef.current.animateToRegion(newRegion, 500);
     }
-  }, [medals]);
+  }, [medals, region]);
 
   /**
    * 履歴からメダルを押下（地図上でハイライト表示）
@@ -747,30 +666,8 @@ export const MapScreen: React.FC = () => {
         <MaterialIcons name="refresh" size={28} color="#1E88E5" />
       </TouchableOpacity>
 
-      {/* 下部コントロールエリア（登録モード時のみ表示） */}
-      {mode === 'registration' && (
-        <View style={[styles.bottomControls, { bottom: 60 + insets.bottom }]}>
-          <View style={styles.buttonContainer}>
-            <Button
-              title="📍 メダルを登録"
-              onPress={handleRegisterMedal}
-              loading={registering || location.loading}
-              style={styles.registerButton}
-            />
-          </View>
-
-          {location.error && (
-            <Text style={styles.errorText}>{location.error}</Text>
-          )}
-
-          {loadingMedals && (
-            <Text style={styles.loadingText}>メダルを読み込み中...</Text>
-          )}
-        </View>
-      )}
-
-      {/* 履歴モーダル */}
-      <HistoryModal
+      {/* 履歴パネル */}
+      <HistoryPanel
         visible={historyModalVisible}
         onClose={handleCloseHistoryModal}
         onMedalPress={handleHistoryMedalPress}

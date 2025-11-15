@@ -2,32 +2,37 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/common/Button';
-import { getUserCollections } from '../services/medalService';
+import { getUserCollections, getUserMedals } from '../services/medalService';
 
 export const MyPageScreen: React.FC = () => {
   const { user } = useAuth();
   const [collectionCount, setCollectionCount] = useState<number>(0);
+  const [registeredCount, setRegisteredCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   /**
-   * 獲得メダル数を取得
+   * 獲得メダル数と登録メダル数を取得
    */
   useEffect(() => {
-    const loadCollectionCount = async () => {
+    const loadStats = async () => {
       if (!user) return;
 
       try {
         setLoading(true);
-        const collections = await getUserCollections(user.id);
+        const [collections, registeredMedals] = await Promise.all([
+          getUserCollections(user.id),
+          getUserMedals(user.id),
+        ]);
         setCollectionCount(collections.length);
+        setRegisteredCount(registeredMedals.length);
       } catch (error) {
-        console.error('Load collection count error:', error);
+        console.error('Load stats error:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadCollectionCount();
+    loadStats();
   }, [user]);
 
   return (
@@ -44,15 +49,22 @@ export const MyPageScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* メダル獲得数 */}
+        {/* メダル統計 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>メダル獲得状況</Text>
+          <Text style={styles.sectionTitle}>メダル統計</Text>
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
               <Text style={styles.statNumber}>
                 {loading ? '...' : collectionCount}
               </Text>
               <Text style={styles.statLabel}>獲得メダル数</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>
+                {loading ? '...' : registeredCount}
+              </Text>
+              <Text style={styles.statLabel}>登録メダル数</Text>
             </View>
           </View>
         </View>
@@ -125,6 +137,11 @@ const styles = StyleSheet.create({
   statBox: {
     alignItems: 'center',
     paddingHorizontal: 24,
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: '#E0E0E0',
+    marginVertical: 8,
   },
   statNumber: {
     fontSize: 36,

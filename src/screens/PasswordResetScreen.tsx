@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TextInput } from '../components/common/TextInput';
 import { Button } from '../components/common/Button';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,6 +21,7 @@ interface PasswordResetScreenProps {
 
 export const PasswordResetScreen: React.FC<PasswordResetScreenProps> = ({ navigation }) => {
   const { resetPassword } = useAuth();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -69,7 +71,7 @@ export const PasswordResetScreen: React.FC<PasswordResetScreenProps> = ({ naviga
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.content}>
+        <View style={[styles.content, { paddingTop: 20 + insets.top }]}>
           {/* ヘッダー */}
           <View style={styles.header}>
             <TouchableOpacity

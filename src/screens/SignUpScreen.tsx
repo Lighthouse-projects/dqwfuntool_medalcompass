@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TextInput } from '../components/common/TextInput';
 import { Button } from '../components/common/Button';
 import { useAuth } from '../contexts/AuthContext';
@@ -25,6 +25,7 @@ interface SignUpScreenProps {
 
 export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
   const { signUp } = useAuth();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -70,16 +71,15 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.content}>
+        <View style={[styles.content, { paddingTop: 20 + insets.top }]}>
           {/* ヘッダー */}
           <View style={styles.header}>
             <TouchableOpacity
@@ -108,13 +108,13 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
 
           {/* パスワード入力 */}
           <TextInput
-            label="パスワード（8文字以上）"
+            label="パスワード（4文字以上）"
             value={password}
             onChangeText={(text) => {
               setPassword(text);
               setPasswordError(null);
             }}
-            placeholder="••••••••"
+            placeholder="••••"
             secureTextEntry
             autoCapitalize="none"
             autoComplete="password"
@@ -129,7 +129,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
               setPasswordConfirm(text);
               setPasswordConfirmError(null);
             }}
-            placeholder="••••••••"
+            placeholder="••••"
             secureTextEntry
             autoCapitalize="none"
             error={passwordConfirmError}
@@ -142,10 +142,9 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
             loading={loading}
             style={styles.signUpButton}
           />
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

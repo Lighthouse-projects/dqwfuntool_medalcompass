@@ -18,8 +18,8 @@ export const validatePassword = (password: string): string | null => {
     return 'パスワードを入力してください';
   }
 
-  if (password.length < 8) {
-    return 'パスワードは8文字以上で入力してください';
+  if (password.length < 4) {
+    return 'パスワードは4文字以上で入力してください';
   }
 
   return null;

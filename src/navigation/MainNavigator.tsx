@@ -8,7 +8,7 @@ import { MyPageScreen } from '../screens/MyPageScreen';
 import { useAuth } from '../contexts/AuthContext';
 
 export type MainTabParamList = {
-  Map: { medalNo?: number; openHistory?: boolean } | undefined;
+  Map: { medalNo?: number; openHistory?: boolean; toggleHistory?: boolean } | undefined;
   History: undefined;
   MyPage: undefined;
   Logout: undefined;
@@ -73,7 +73,7 @@ export const MainNavigator: React.FC = () => {
         options={{
           tabBarLabel: 'メダル',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="map" size={size} color={color} />
+            <MaterialIcons name="stars" size={size} color={color} />
           ),
         }}
       />
@@ -84,14 +84,14 @@ export const MainNavigator: React.FC = () => {
           tabPress: (e) => {
             // デフォルトの遷移を防止
             e.preventDefault();
-            // Mapスクリーンに履歴モーダルを開くパラメータを渡して遷移
-            navigation.navigate('Map', { openHistory: true });
+            // Mapスクリーンに履歴パネルをトグルするパラメータを渡して遷移
+            navigation.navigate('Map', { toggleHistory: true });
           },
         })}
         options={{
-          tabBarLabel: '履歴',
+          tabBarLabel: 'メダルの思い出',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="history" size={size} color={color} />
+            <MaterialIcons name="bookmarks" size={size} color={color} />
           ),
         }}
       />

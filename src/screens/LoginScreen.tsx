@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import Checkbox from 'expo-checkbox';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TextInput } from '../components/common/TextInput';
 import { Button } from '../components/common/Button';
 import { useAuth } from '../contexts/AuthContext';
@@ -26,6 +27,7 @@ interface LoginScreenProps {
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const { signIn } = useAuth();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.content}>
+        <View style={[styles.content, { paddingTop: 40 + insets.top }]}>
           {/* タイトル */}
           <Text style={styles.title}>dqwfunメダルコンパス</Text>
 

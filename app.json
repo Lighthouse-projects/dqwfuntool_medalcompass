@@ -2,7 +2,7 @@
   "expo": {
     "name": "dqwfun-medalcompass",
     "slug": "dqwfun-medalcompass",
-    "version": "1.0.2",
+    "version": "1.0.5",
     "orientation": "portrait",
     "icon": "./assets/medal-icon-1024.png",
     "userInterfaceStyle": "light",
@@ -16,7 +16,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.lighthouseprojects.medalcompass",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "メダルの位置を登録・表示するために位置情報を使用します。",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "メダルの位置を登録・表示するために位置情報を使用します。"
       }
     },
     "android": {
@@ -25,6 +27,10 @@
         "backgroundColor": "#FFC107"
       },
       "package": "com.lighthouseprojects.medalcompass",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },

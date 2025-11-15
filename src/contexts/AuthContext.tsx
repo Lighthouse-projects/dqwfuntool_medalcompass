@@ -109,12 +109,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await clearCredentials();
       }
 
-      const { error } = await supabase.auth.signOut();
+      // scope: 'local' を指定してローカルセッションのみ削除
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
 
-      if (error) throw error;
+      if (error) {
+        console.error('SignOut error:', error);
+        throw error;
+      }
 
       // セッションは onAuthStateChange で自動更新される
     } catch (error) {
+      console.error('Logout error:', error);
       const errorMessage = getErrorMessage(error as AuthError);
       setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
       throw new Error(errorMessage);

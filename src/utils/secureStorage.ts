@@ -78,7 +78,7 @@ export async function clearCredentials(): Promise<void> {
     await SecureStore.deleteItemAsync(KEYS.REMEMBER_ME);
   } catch (error) {
     console.error('Failed to clear credentials:', error);
-    // エラーを無視
+    // エラーを無視（ログアウトを妨げない）
   }
 }
 

@@ -9,9 +9,7 @@ import { useLocation } from '../hooks/useLocation';
 import { registerMedal, getMedalsWithinRadius, deleteMedal, reportMedal, getMedalReportCount, hasUserReportedMedal, checkAndInvalidateMedal, checkAndBanUser, getUserCollections, collectMedal, uncollectMedal } from '../services/medalService';
 import { isAccuracyGoodEnough } from '../utils/location';
 import { Medal, MedalCollection } from '../types/medal';
-
-// モード定義
-type AppMode = 'registration' | 'exploration';
+import { AppMode, saveAppMode, getAppMode } from '../utils/appStorage';
 
 export const MapScreen: React.FC = () => {
   const { signOut, user } = useAuth();
@@ -34,6 +32,18 @@ export const MapScreen: React.FC = () => {
 
   // 初期表示位置: 現在地を中心に半径1km
   const [region, setRegion] = useState<Region | null>(null);
+
+  /**
+   * 保存されているモードを復元
+   */
+  useEffect(() => {
+    const restoreMode = async () => {
+      const savedMode = await getAppMode();
+      setMode(savedMode);
+    };
+
+    restoreMode();
+  }, []);
 
   /**
    * 初期表示: 現在地を取得してマップ中心に設定
@@ -296,8 +306,10 @@ export const MapScreen: React.FC = () => {
   /**
    * モード切替
    */
-  const handleToggleMode = () => {
-    setMode((prevMode) => (prevMode === 'registration' ? 'exploration' : 'registration'));
+  const handleToggleMode = async () => {
+    const newMode = mode === 'registration' ? 'exploration' : 'registration';
+    setMode(newMode);
+    await saveAppMode(newMode); // モードを保存
   };
 
   /**

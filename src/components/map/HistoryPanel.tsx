@@ -1,11 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Dimensions, PanResponder, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { getUserCollections } from '../../services/medalService';
 import { MedalCollection } from '../../types/medal';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
+
+// スナップポイント（画面の何%の高さにスナップするか）
+const SNAP_POINTS = [0.2, 0.28, 0.36, 0.44, 0.52, 0.6];
 
 interface HistoryPanelProps {
   visible: boolean;
@@ -25,6 +28,82 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   const { user } = useAuth();
   const [collections, setCollections] = useState<MedalCollection[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // パネルの高さをアニメーション管理
+  const panelHeight = useRef(new Animated.Value(SCREEN_HEIGHT * 0.2)).current;
+  const [currentSnapIndex, setCurrentSnapIndex] = useState(0); // 初期は20%
+  const dragStartHeight = useRef(SCREEN_HEIGHT * 0.2); // ドラッグ開始時の高さ
+
+  /**
+   * 最も近いスナップポイントにアニメーション
+   */
+  const snapToClosest = useCallback((gestureY: number) => {
+    const currentHeight = SCREEN_HEIGHT - gestureY;
+    const currentRatio = currentHeight / SCREEN_HEIGHT;
+
+    // 最も近いスナップポイントを見つける
+    let closestIndex = 0;
+    let minDiff = Math.abs(SNAP_POINTS[0] - currentRatio);
+
+    SNAP_POINTS.forEach((point, index) => {
+      const diff = Math.abs(point - currentRatio);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIndex = index;
+      }
+    });
+
+    // 下にスワイプしすぎたら閉じる
+    if (currentRatio < 0.15) {
+      onClose();
+      return;
+    }
+
+    const targetHeight = SCREEN_HEIGHT * SNAP_POINTS[closestIndex];
+    setCurrentSnapIndex(closestIndex);
+    dragStartHeight.current = targetHeight; // スナップ後の高さを記憶
+
+    Animated.spring(panelHeight, {
+      toValue: targetHeight,
+      useNativeDriver: false,
+      tension: 50,
+      friction: 8,
+    }).start();
+  }, [panelHeight, onClose]);
+
+  /**
+   * PanResponderの設定
+   */
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false, // タップでは反応しない
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // 縦方向の移動が5px以上の場合のみドラッグ開始
+        return Math.abs(gestureState.dy) > 5;
+      },
+      onPanResponderGrant: () => {
+        // ドラッグ開始時の実際の高さを記憶（アニメーション中の値も正確に取得）
+        // @ts-ignore - Animated.Valueの内部プロパティにアクセス
+        dragStartHeight.current = panelHeight._value || SCREEN_HEIGHT * SNAP_POINTS[currentSnapIndex];
+      },
+      onPanResponderMove: (_, gestureState) => {
+        // ドラッグ開始時の高さを基準に、dyの変化分だけ調整
+        // dyが負の値（上にドラッグ）なら高さを増やす、正の値（下にドラッグ）なら高さを減らす
+        const newHeight = dragStartHeight.current - gestureState.dy;
+        // 最小10%、最大90%に制限
+        const clampedHeight = Math.max(
+          SCREEN_HEIGHT * 0.1,
+          Math.min(SCREEN_HEIGHT * 0.9, newHeight)
+        );
+        panelHeight.setValue(clampedHeight);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const finalHeight = dragStartHeight.current - gestureState.dy;
+        const finalY = SCREEN_HEIGHT - finalHeight;
+        snapToClosest(finalY);
+      },
+    })
+  ).current;
 
   /**
    * 獲得履歴を読み込み
@@ -92,8 +171,13 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   }
 
   return (
-    <View style={styles.panelContainer} pointerEvents="box-none">
+    <Animated.View style={[styles.panelContainer, { height: panelHeight }]} pointerEvents="box-none">
       <View style={styles.panel} pointerEvents="auto">
+        {/* ドラッグハンドル */}
+        <View {...panResponder.panHandlers} style={styles.dragHandleContainer}>
+          <View style={styles.dragHandle} />
+        </View>
+
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>メダルの思い出</Text>
@@ -122,7 +206,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
           />
         )}
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -132,7 +216,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: SCREEN_HEIGHT * 0.25,
     zIndex: 100,
   },
   panel: {
@@ -145,6 +228,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 10,
+  },
+  dragHandleContainer: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    cursor: 'grab',
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#BDBDBD',
+    borderRadius: 2,
   },
   header: {
     flexDirection: 'row',

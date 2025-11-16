@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   TouchableOpacityProps,
 } from 'react-native';
+import { COLORS, FONT_SIZES, SIZES, BORDER_RADIUS } from '../../constants/theme';
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -41,7 +42,7 @@ export const Button: React.FC<ButtonProps> = ({
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator color={isPrimary ? '#FFFFFF' : '#1E88E5'} />
+        <ActivityIndicator color={isPrimary ? COLORS.BACKGROUND : COLORS.PRIMARY} />
       ) : (
         <Text
           style={[
@@ -59,35 +60,35 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    height: 50,
-    borderRadius: 8,
+    height: SIZES.BUTTON_HEIGHT,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
   },
   primaryButton: {
-    backgroundColor: '#1E88E5',
+    backgroundColor: COLORS.PRIMARY,
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: COLORS.TRANSPARENT,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.BORDER,
   },
   disabledButton: {
-    backgroundColor: '#BDBDBD',
-    borderColor: '#BDBDBD',
+    backgroundColor: COLORS.PLACEHOLDER,
+    borderColor: COLORS.PLACEHOLDER,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: FONT_SIZES.MEDIUM,
     fontWeight: 'bold',
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.BACKGROUND,
   },
   secondaryButtonText: {
-    color: '#757575',
+    color: COLORS.TEXT_SECONDARY,
   },
   disabledButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.BACKGROUND,
   },
 });

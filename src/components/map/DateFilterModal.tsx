@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
 import { MaterialIcons } from '@expo/vector-icons';
+import { COLORS, FONT_SIZES, BORDER_RADIUS, SHADOWS } from '../../constants/theme';
 
 interface DateFilterModalProps {
   visible: boolean;
@@ -28,7 +29,7 @@ export const DateFilterModal: React.FC<DateFilterModalProps> = ({
     markedDates.forEach((date) => {
       marked[date] = {
         marked: true,
-        dotColor: '#1E88E5',
+        dotColor: COLORS.PRIMARY,
       };
     });
 
@@ -37,7 +38,7 @@ export const DateFilterModal: React.FC<DateFilterModalProps> = ({
       marked[selectedDate] = {
         ...marked[selectedDate],
         selected: true,
-        selectedColor: '#1E88E5',
+        selectedColor: COLORS.PRIMARY,
       };
     }
 
@@ -82,11 +83,11 @@ export const DateFilterModal: React.FC<DateFilterModalProps> = ({
             onDayPress={handleDayPress}
             markedDates={getMarkedDates()}
             theme={{
-              todayTextColor: '#1E88E5',
-              selectedDayBackgroundColor: '#1E88E5',
-              selectedDayTextColor: '#FFFFFF',
-              arrowColor: '#1E88E5',
-              monthTextColor: '#212121',
+              todayTextColor: COLORS.PRIMARY,
+              selectedDayBackgroundColor: COLORS.PRIMARY,
+              selectedDayTextColor: COLORS.BACKGROUND,
+              arrowColor: COLORS.PRIMARY,
+              monthTextColor: COLORS.TEXT_PRIMARY,
               textMonthFontWeight: 'bold',
               textDayFontSize: 14,
               textMonthFontSize: 16,
@@ -116,8 +117,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: COLORS.BACKGROUND,
+    borderRadius: BORDER_RADIUS.XLARGE,
     width: '90%',
     maxWidth: 400,
     shadowColor: '#000',
@@ -133,12 +134,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORS.BORDER,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: FONT_SIZES.LARGE,
     fontWeight: 'bold',
-    color: '#212121',
+    color: COLORS.TEXT_PRIMARY,
   },
   closeButton: {
     padding: 8,
@@ -146,17 +147,17 @@ const styles = StyleSheet.create({
   footer: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORS.BORDER,
   },
   showAllButton: {
-    backgroundColor: '#1E88E5',
+    backgroundColor: COLORS.PRIMARY,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     alignItems: 'center',
   },
   showAllButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    color: COLORS.BACKGROUND,
+    fontSize: FONT_SIZES.MEDIUM,
     fontWeight: 'bold',
   },
 });

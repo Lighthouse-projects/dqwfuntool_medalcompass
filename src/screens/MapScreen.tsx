@@ -11,6 +11,7 @@ import { registerMedal, getMedalsWithinRadius, deleteMedal, reportMedal, getMeda
 import { Medal, MedalCollection } from '../types/medal';
 import { AppMode, saveAppMode, getAppMode, MapState, saveMapState, getMapState } from '../utils/appStorage';
 import { MainTabParamList } from '../navigation/MainNavigator';
+import { COLORS, FONT_SIZES, SHADOWS, BORDER_RADIUS, SIZES } from '../constants/theme';
 
 type MapScreenRouteProp = RouteProp<MainTabParamList, 'Map'>;
 type MapScreenNavigationProp = NavigationProp<MainTabParamList, 'Map'>;
@@ -709,7 +710,7 @@ export const MapScreen: React.FC = () => {
         {tempMedalPosition && (
           <Marker
             coordinate={tempMedalPosition}
-            pinColor="#FF9800"
+            pinColor=COLORS.WARNING
             opacity={0.7}
           />
         )}
@@ -733,9 +734,9 @@ export const MapScreen: React.FC = () => {
         disabled={location.loading || movingToCurrentLocation}
       >
         {movingToCurrentLocation ? (
-          <ActivityIndicator size="small" color="#1E88E5" />
+          <ActivityIndicator size="small" color=COLORS.PRIMARY />
         ) : (
-          <MaterialIcons name="my-location" size={28} color="#1E88E5" />
+          <MaterialIcons name="my-location" size={28} color=COLORS.PRIMARY />
         )}
       </TouchableOpacity>
 
@@ -746,9 +747,9 @@ export const MapScreen: React.FC = () => {
         disabled={loadingMedals}
       >
         {loadingMedals ? (
-          <ActivityIndicator size="small" color="#1E88E5" />
+          <ActivityIndicator size="small" color=COLORS.PRIMARY />
         ) : (
-          <MaterialIcons name="refresh" size={28} color="#1E88E5" />
+          <MaterialIcons name="refresh" size={28} color=COLORS.PRIMARY />
         )}
       </TouchableOpacity>
 
@@ -769,17 +770,17 @@ export const MapScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.BACKGROUND,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.BACKGROUND,
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: 16,
-    color: '#757575',
+    fontSize: FONT_SIZES.MEDIUM,
+    color: COLORS.TEXT_SECONDARY,
   },
   map: {
     flex: 1,
@@ -793,38 +794,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modeToggleButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.BACKGROUND,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 24,
+    borderRadius: BORDER_RADIUS.ROUND,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 5,
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.BORDER,
   },
   modeToggleButtonActive: {
-    backgroundColor: '#1E88E5',
+    backgroundColor: COLORS.PRIMARY,
     borderColor: '#1976D2',
   },
   modeToggleText: {
-    fontSize: 16,
+    fontSize: FONT_SIZES.MEDIUM,
     fontWeight: 'bold',
     color: '#424242',
   },
   modeToggleTextActive: {
-    color: '#FFFFFF',
+    color: COLORS.BACKGROUND,
   },
   currentLocationButton: {
     position: 'absolute',
     right: 16,
     bottom: 200,
     width: 56,
-    height: 56,
+    height: SIZES.HEADER_HEIGHT,
     borderRadius: 28,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.BACKGROUND,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -838,9 +839,9 @@ const styles = StyleSheet.create({
     right: 16,
     bottom: 130,
     width: 56,
-    height: 56,
+    height: SIZES.HEADER_HEIGHT,
     borderRadius: 28,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.BACKGROUND,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -853,7 +854,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.BACKGROUND,
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
@@ -868,8 +869,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   errorText: {
-    fontSize: 12,
-    color: '#F44336',
+    fontSize: FONT_SIZES.XSMALL,
+    color: COLORS.ERROR,
     marginTop: 8,
     textAlign: 'center',
   },

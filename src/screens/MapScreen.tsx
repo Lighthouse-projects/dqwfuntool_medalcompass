@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
 import MapView, { Marker, Region, Circle } from 'react-native-maps';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -32,6 +32,7 @@ export const MapScreen: React.FC = () => {
 
   // 獲得済みメダルリスト（探検モード用）
   const [collectedMedals, setCollectedMedals] = useState<Set<number>>(new Set());
+  const [collectedMedalsList, setCollectedMedalsList] = useState<MedalCollection[]>([]);
 
   // 長押し時の仮メダル位置
   const [tempMedalPosition, setTempMedalPosition] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -50,6 +51,9 @@ export const MapScreen: React.FC = () => {
 
   // 履歴パネルの高さ（ピクセル）
   const [historyPanelHeight, setHistoryPanelHeight] = useState(0);
+
+  // 日付フィルター（選択した日付のメダルのみ表示）
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   /**
    * 保存されているモードを復元
@@ -163,6 +167,7 @@ export const MapScreen: React.FC = () => {
         const collections = await getUserCollections(user.id);
         const medalNos = new Set(collections.map((c) => c.medal_no));
         setCollectedMedals(medalNos);
+        setCollectedMedalsList(collections); // 日付付きのリストも保存
       } catch (error) {
         console.error('Load collected medals error:', error);
       }
@@ -170,6 +175,34 @@ export const MapScreen: React.FC = () => {
 
     loadCollectedMedals();
   }, [user]);
+
+  /**
+   * 日付フィルター適用済みのメダルリスト
+   * パネルが開いていて、かつ日付が選択されている場合のみフィルター適用
+   */
+  const filteredMedals = useMemo(() => {
+    // パネルが閉じている、または日付未選択の場合は全て表示
+    if (!historyModalVisible || !selectedDate) {
+      return medals;
+    }
+
+    // 選択した日付と同じ日に獲得したメダルのみフィルタリング
+    const selectedDateObj = new Date(selectedDate);
+    const filteredMedalNos = new Set<number>();
+
+    collectedMedalsList.forEach((collection) => {
+      const collectionDate = new Date(collection.collected_at);
+      if (
+        collectionDate.getFullYear() === selectedDateObj.getFullYear() &&
+        collectionDate.getMonth() === selectedDateObj.getMonth() &&
+        collectionDate.getDate() === selectedDateObj.getDate()
+      ) {
+        filteredMedalNos.add(collection.medal_no);
+      }
+    });
+
+    return medals.filter((medal) => filteredMedalNos.has(medal.medal_no));
+  }, [medals, selectedDate, historyModalVisible, collectedMedalsList]);
 
   /**
    * クリーンアップ: タイマーをクリア
@@ -346,6 +379,11 @@ export const MapScreen: React.FC = () => {
     try {
       await collectMedal(user.id, medal.medal_no);
       setCollectedMedals((prev) => new Set(prev).add(medal.medal_no));
+
+      // 獲得済みメダルリストを再取得して最新の状態に更新
+      const collections = await getUserCollections(user.id);
+      setCollectedMedalsList(collections);
+
       Alert.alert('成功', '✅ メダルを獲得しました');
     } catch (error) {
       console.error('Collect medal error:', error);
@@ -639,6 +677,7 @@ export const MapScreen: React.FC = () => {
 
       {/* マップビュー */}
       <MapView
+        key={`map-${filteredMedals.length}`} // メダル数が変わったら強制再描画
         ref={mapRef}
         style={styles.map}
         initialRegion={region}
@@ -649,7 +688,7 @@ export const MapScreen: React.FC = () => {
         loadingEnabled={true}
       >
         {/* メダルマーカー表示 */}
-        {medals.map((medal) => (
+        {filteredMedals.map((medal) => (
           <Marker
             key={medal.medal_no}
             coordinate={{
@@ -721,6 +760,7 @@ export const MapScreen: React.FC = () => {
         onMedalPressIn={handleHistoryMedalPressIn}
         onMedalPressOut={handleHistoryMedalPressOut}
         onHeightChange={setHistoryPanelHeight}
+        onDateFilter={setSelectedDate}
       />
     </View>
   );

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Dimensions, PanResponder, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { getUserCollections } from '../../services/medalService';
 import { MedalCollection } from '../../types/medal';
+import { DateFilterModal } from './DateFilterModal';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -17,6 +18,7 @@ interface HistoryPanelProps {
   onMedalPressIn: (medalNo: number) => void;
   onMedalPressOut: () => void;
   onHeightChange?: (height: number) => void; // パネルの高さ変更を通知
+  onDateFilter?: (date: string | null) => void; // 日付フィルター変更を通知
 }
 
 export const HistoryPanel: React.FC<HistoryPanelProps> = ({
@@ -26,6 +28,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   onMedalPressIn,
   onMedalPressOut,
   onHeightChange,
+  onDateFilter,
 }) => {
   const { user } = useAuth();
   const [collections, setCollections] = useState<MedalCollection[]>([]);
@@ -35,6 +38,10 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   const panelHeight = useRef(new Animated.Value(SCREEN_HEIGHT * 0.2)).current;
   const [currentSnapIndex, setCurrentSnapIndex] = useState(0); // 初期は20%
   const dragStartHeight = useRef(SCREEN_HEIGHT * 0.2); // ドラッグ開始時の高さ
+
+  // 日付フィルター関連
+  const [dateFilterModalVisible, setDateFilterModalVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   /**
    * 最も近いスナップポイントにアニメーション
@@ -151,6 +158,47 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   }, [visible, currentSnapIndex, onHeightChange]);
 
   /**
+   * 日付フィルター選択時の処理
+   */
+  const handleSelectDate = useCallback((date: string | null) => {
+    setSelectedDate(date);
+    onDateFilter?.(date);
+  }, [onDateFilter]);
+
+  /**
+   * 日付フィルター適用済みのコレクション
+   */
+  const filteredCollections = useMemo(() => {
+    if (!selectedDate) {
+      return collections;
+    }
+
+    // 選択した日付と同じ日のメダルのみフィルタリング
+    return collections.filter((collection) => {
+      const collectionDate = new Date(collection.collected_at);
+      const selectedDateObj = new Date(selectedDate);
+      return (
+        collectionDate.getFullYear() === selectedDateObj.getFullYear() &&
+        collectionDate.getMonth() === selectedDateObj.getMonth() &&
+        collectionDate.getDate() === selectedDateObj.getDate()
+      );
+    });
+  }, [collections, selectedDate]);
+
+  /**
+   * メダルのある日付リストを生成
+   */
+  const markedDates = useMemo(() => {
+    const dates = new Set<string>();
+    collections.forEach((collection) => {
+      const date = new Date(collection.collected_at);
+      const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      dates.add(dateString);
+    });
+    return Array.from(dates);
+  }, [collections]);
+
+  /**
    * 日時をフォーマット
    */
   const formatDate = (dateString: string) => {
@@ -196,11 +244,25 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>メダルの思い出</Text>
-            <Text style={styles.subtitle}>合計 {collections.length} 個</Text>
+            <Text style={styles.subtitle}>
+              {selectedDate ? `${filteredCollections.length} 個` : `合計 ${collections.length} 個`}
+            </Text>
           </View>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <MaterialIcons name="close" size={24} color="#424242" />
-          </TouchableOpacity>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              onPress={() => setDateFilterModalVisible(true)}
+              style={styles.calendarButton}
+            >
+              <MaterialIcons
+                name="calendar-today"
+                size={24}
+                color={selectedDate ? '#1E88E5' : '#424242'}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <MaterialIcons name="close" size={24} color="#424242" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {loading ? (
@@ -214,13 +276,22 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
           </View>
         ) : (
           <FlatList
-            data={collections}
+            data={filteredCollections}
             renderItem={renderItem}
             keyExtractor={(item) => `${item.medal_no}-${item.collected_at}`}
             contentContainerStyle={styles.listContent}
           />
         )}
       </View>
+
+      {/* 日付フィルターモーダル */}
+      <DateFilterModal
+        visible={dateFilterModalVisible}
+        onClose={() => setDateFilterModalVisible(false)}
+        onSelectDate={handleSelectDate}
+        selectedDate={selectedDate}
+        markedDates={markedDates}
+      />
     </Animated.View>
   );
 };
@@ -263,6 +334,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  calendarButton: {
+    padding: 8,
   },
   title: {
     fontSize: 18,

@@ -710,7 +710,7 @@ export const MapScreen: React.FC = () => {
         {tempMedalPosition && (
           <Marker
             coordinate={tempMedalPosition}
-            pinColor=COLORS.WARNING
+            pinColor={COLORS.WARNING}
             opacity={0.7}
           />
         )}
@@ -734,9 +734,9 @@ export const MapScreen: React.FC = () => {
         disabled={location.loading || movingToCurrentLocation}
       >
         {movingToCurrentLocation ? (
-          <ActivityIndicator size="small" color=COLORS.PRIMARY />
+          <ActivityIndicator size="small" color={COLORS.PRIMARY} />
         ) : (
-          <MaterialIcons name="my-location" size={28} color=COLORS.PRIMARY />
+          <MaterialIcons name="my-location" size={28} color={COLORS.PRIMARY} />
         )}
       </TouchableOpacity>
 
@@ -747,9 +747,9 @@ export const MapScreen: React.FC = () => {
         disabled={loadingMedals}
       >
         {loadingMedals ? (
-          <ActivityIndicator size="small" color=COLORS.PRIMARY />
+          <ActivityIndicator size="small" color={COLORS.PRIMARY} />
         ) : (
-          <MaterialIcons name="refresh" size={28} color=COLORS.PRIMARY />
+          <MaterialIcons name="refresh" size={28} color={COLORS.PRIMARY} />
         )}
       </TouchableOpacity>
 
@@ -808,12 +808,12 @@ const styles = StyleSheet.create({
   },
   modeToggleButtonActive: {
     backgroundColor: COLORS.PRIMARY,
-    borderColor: '#1976D2',
+    borderColor: COLORS.PRIMARY,
   },
   modeToggleText: {
     fontSize: FONT_SIZES.MEDIUM,
     fontWeight: 'bold',
-    color: '#424242',
+    color: COLORS.TEXT_PRIMARY,
   },
   modeToggleTextActive: {
     color: COLORS.BACKGROUND,

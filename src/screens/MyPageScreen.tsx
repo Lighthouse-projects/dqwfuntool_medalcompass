@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/common/Button';
 import { getUserCollections, getUserMedals } from '../services/medalService';
+import { COLORS } from '../constants/theme';
 
 export const MyPageScreen: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#1E88E5',
+    color: COLORS.PRIMARY,
     marginBottom: 4,
   },
   statLabel: {

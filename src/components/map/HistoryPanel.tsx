@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getUserCollections } from '../../services/medalService';
 import { MedalCollection } from '../../types/medal';
 import { DateFilterModal } from './DateFilterModal';
+import { COLORS, FONT_SIZES } from '../../constants/theme';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -256,18 +257,18 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
               <MaterialIcons
                 name="calendar-today"
                 size={24}
-                color={selectedDate ? '#1E88E5' : '#424242'}
+                color={selectedDate ? COLORS.PRIMARY : COLORS.TEXT_PRIMARY}
               />
             </TouchableOpacity>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <MaterialIcons name="close" size={24} color="#424242" />
+              <MaterialIcons name="close" size={24} color={COLORS.TEXT_PRIMARY} />
             </TouchableOpacity>
           </View>
         </View>
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#1E88E5" />
+            <ActivityIndicator size="large" color={COLORS.PRIMARY} />
           </View>
         ) : collections.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -395,9 +396,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   itemNumber: {
-    fontSize: 14,
+    fontSize: FONT_SIZES.SMALL,
     fontWeight: 'bold',
-    color: '#1E88E5',
+    color: COLORS.PRIMARY,
     marginRight: 6,
   },
   medalNumber: {

@@ -7,6 +7,7 @@ import { SignUpScreen } from '../screens/SignUpScreen';
 import { PasswordResetScreen } from '../screens/PasswordResetScreen';
 import { MainNavigator } from './MainNavigator';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { COLORS } from '../constants/theme';
 
 // ナビゲーションの型定義
 export type AuthStackParamList = {
@@ -38,7 +39,7 @@ export const RootNavigator = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1E88E5" />
+        <ActivityIndicator size="large" color={COLORS.PRIMARY} />
       </View>
     );
   }
@@ -55,6 +56,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.BACKGROUND,
   },
 });

@@ -15,6 +15,7 @@ import { TextInput } from '../components/common/TextInput';
 import { Button } from '../components/common/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { validateEmail, validatePassword } from '../utils/validation';
+import { COLORS } from '../constants/theme';
 import {
   saveCredentials,
   getCredentials,
@@ -130,7 +131,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             <Checkbox
               value={rememberMe}
               onValueChange={setRememberMe}
-              color={rememberMe ? '#1E88E5' : undefined}
+              color={rememberMe ? COLORS.PRIMARY : undefined}
               style={styles.checkbox}
             />
             <Text style={styles.checkboxLabel}>ログイン情報を記憶する</Text>
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: 14,
-    color: '#1E88E5',
+    color: COLORS.PRIMARY,
     textDecorationLine: 'none',
   },
 });

@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapScreen } from '../screens/MapScreen';
 import { MyPageScreen } from '../screens/MyPageScreen';
+import { COLORS } from '../constants/theme';
 
 export type MainTabParamList = {
   Map: { medalNo?: number; openHistory?: boolean; toggleHistory?: boolean } | undefined;
@@ -19,8 +20,8 @@ export const MainNavigator: React.FC = () => {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#1E88E5',
-        tabBarInactiveTintColor: '#757575',
+        tabBarActiveTintColor: COLORS.PRIMARY,
+        tabBarInactiveTintColor: COLORS.TEXT_SECONDARY,
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,

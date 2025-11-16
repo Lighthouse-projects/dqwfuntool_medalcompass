@@ -273,7 +273,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
         ) : collections.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>まだメダルを獲得していません</Text>
-            <Text style={styles.emptySubText}>冒険モードでメダルを探してみましょう</Text>
+            <Text style={styles.emptySubText}>探検モードでメダルを探してみましょう</Text>
           </View>
         ) : (
           <FlatList

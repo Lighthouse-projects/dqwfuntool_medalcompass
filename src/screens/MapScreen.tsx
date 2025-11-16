@@ -28,10 +28,10 @@ export const MapScreen: React.FC = () => {
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const saveMapStateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // モード状態管理（初期表示は冒険モード）
+  // モード状態管理（初期表示は探検モード）
   const [mode, setMode] = useState<AppMode>('exploration');
 
-  // 獲得済みメダルリスト（冒険モード用）
+  // 獲得済みメダルリスト（探検モード用）
   const [collectedMedals, setCollectedMedals] = useState<Set<number>>(new Set());
   const [collectedMedalsList, setCollectedMedalsList] = useState<MedalCollection[]>([]);
 
@@ -158,7 +158,7 @@ export const MapScreen: React.FC = () => {
   }, []);
 
   /**
-   * ユーザーの獲得済みメダルリストを読み込み（冒険モード用）
+   * ユーザーの獲得済みメダルリストを読み込み（探検モード用）
    */
   useEffect(() => {
     const loadCollectedMedals = async () => {
@@ -304,7 +304,7 @@ export const MapScreen: React.FC = () => {
    * 地図長押し時のメダル登録処理
    */
   const handleMapLongPress = async (event: any) => {
-    // 冒険モードでは長押し登録不可
+    // 探検モードでは長押し登録不可
     if (mode === 'exploration') {
       return;
     }
@@ -369,7 +369,7 @@ export const MapScreen: React.FC = () => {
   };
 
   /**
-   * メダル獲得処理（冒険モード）
+   * メダル獲得処理（探検モード）
    */
   const handleCollectMedal = async (medal: Medal) => {
     if (!user) {
@@ -393,7 +393,7 @@ export const MapScreen: React.FC = () => {
   };
 
   /**
-   * メダル獲得キャンセル処理（冒険モード）
+   * メダル獲得キャンセル処理（探検モード）
    */
   const handleUncollectMedal = async (medal: Medal) => {
     if (!user) {
@@ -428,7 +428,7 @@ export const MapScreen: React.FC = () => {
       return `${year}-${month}-${day}`;
     };
 
-    // 冒険モード: 獲得/獲得キャンセル処理
+    // 探検モード: 獲得/獲得キャンセル処理
     if (mode === 'exploration') {
       const isCollected = collectedMedals.has(medal.medal_no);
 
@@ -671,7 +671,7 @@ export const MapScreen: React.FC = () => {
             styles.modeToggleText,
             mode === 'registration' && styles.modeToggleTextActive
           ]}>
-            {mode === 'registration' ? '📍 登録モード' : '🗺️ 冒険モード'}
+            {mode === 'registration' ? '📍 登録モード' : '🗺️ 探検モード'}
           </Text>
         </TouchableOpacity>
       </View>

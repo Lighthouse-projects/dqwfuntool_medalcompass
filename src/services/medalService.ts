@@ -327,7 +327,7 @@ export async function checkAndBanUser(userId: string): Promise<void> {
 // ========================================
 
 /**
- * メダルを獲得（冒険モード）
+ * メダルを獲得（探検モード）
  * @param userId ユーザーID
  * @param medalNo メダル番号
  * @returns 獲得レコード
@@ -369,7 +369,7 @@ export async function collectMedal(
 }
 
 /**
- * メダルの獲得をキャンセル（冒険モード）
+ * メダルの獲得をキャンセル（探検モード）
  * @param userId ユーザーID
  * @param medalNo メダル番号
  * @returns void

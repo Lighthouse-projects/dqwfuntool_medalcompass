@@ -127,9 +127,9 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
     try {
       setLoading(true);
       const data = await getUserCollections(user.id);
-      // 獲得日時の降順（新しい順）でソート
+      // 獲得日時の昇順（古い順）でソート
       const sortedData = data.sort((a, b) =>
-        new Date(b.collected_at).getTime() - new Date(a.collected_at).getTime()
+        new Date(a.collected_at).getTime() - new Date(b.collected_at).getTime()
       );
       setCollections(sortedData);
     } catch (error) {
@@ -273,7 +273,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
         ) : collections.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>まだメダルを獲得していません</Text>
-            <Text style={styles.emptySubText}>探検モードでメダルを探してみましょう</Text>
+            <Text style={styles.emptySubText}>冒険モードでメダルを探してみましょう</Text>
           </View>
         ) : (
           <FlatList

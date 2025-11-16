@@ -42,7 +42,7 @@ export const MainNavigator: React.FC = () => {
         options={{
           tabBarLabel: 'ホーム',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="home" size={size} color={color} />
+            <MaterialIcons name="stars" size={size} color={color} />
           ),
         }}
       />

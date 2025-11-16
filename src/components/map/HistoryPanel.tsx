@@ -133,6 +133,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: SCREEN_HEIGHT * 0.25,
+    zIndex: 100,
   },
   panel: {
     flex: 1,

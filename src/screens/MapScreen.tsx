@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
 import MapView, { Marker, Region, Circle } from 'react-native-maps';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute, useNavigation, RouteProp, NavigationProp } from '@react-navigation/native';
@@ -44,6 +44,9 @@ export const MapScreen: React.FC = () => {
 
   // 履歴から選択されたメダルの位置（押下中のみ表示）
   const [highlightedMedalPosition, setHighlightedMedalPosition] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  // 現在地移動中のローディング状態
+  const [movingToCurrentLocation, setMovingToCurrentLocation] = useState(false);
 
   /**
    * 保存されているモードを復元
@@ -217,20 +220,33 @@ export const MapScreen: React.FC = () => {
   }, []);
 
   /**
-   * 現在地ボタン: 現在地へ移動
+   * 現在地ボタン: 現在地へ移動（ZOOM度合いは保持）
    */
   const handleGoToCurrentLocation = async () => {
-    const result = await location.getCurrentLocation();
-    if (result.success && result.coordinates) {
-      const newRegion: Region = {
-        latitude: result.coordinates.latitude,
-        longitude: result.coordinates.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      };
-      mapRef.current?.animateToRegion(newRegion, 1000);
-    } else {
-      Alert.alert('エラー', '現在地を取得できませんでした');
+    setMovingToCurrentLocation(true);
+    try {
+      const result = await location.getCurrentLocation();
+      if (result.success && result.coordinates) {
+        const newRegion: Region = {
+          latitude: result.coordinates.latitude,
+          longitude: result.coordinates.longitude,
+          latitudeDelta: region?.latitudeDelta || 0.01,
+          longitudeDelta: region?.longitudeDelta || 0.01,
+        };
+        mapRef.current?.animateToRegion(newRegion, 1000);
+
+        // アニメーション完了を待つ（1秒後にローディング解除）
+        setTimeout(() => {
+          setMovingToCurrentLocation(false);
+        }, 1000);
+      } else {
+        Alert.alert('エラー', '現在地を取得できませんでした');
+        setMovingToCurrentLocation(false);
+      }
+    } catch (error) {
+      console.error('Go to current location error:', error);
+      Alert.alert('エラー', '現在地への移動に失敗しました');
+      setMovingToCurrentLocation(false);
     }
   };
 
@@ -652,9 +668,13 @@ export const MapScreen: React.FC = () => {
       <TouchableOpacity
         style={styles.currentLocationButton}
         onPress={handleGoToCurrentLocation}
-        disabled={location.loading}
+        disabled={location.loading || movingToCurrentLocation}
       >
-        <MaterialIcons name="my-location" size={28} color="#1E88E5" />
+        {movingToCurrentLocation ? (
+          <ActivityIndicator size="small" color="#1E88E5" />
+        ) : (
+          <MaterialIcons name="my-location" size={28} color="#1E88E5" />
+        )}
       </TouchableOpacity>
 
       {/* メダル再読み込みボタン（現在地ボタンの下） */}
@@ -663,7 +683,11 @@ export const MapScreen: React.FC = () => {
         onPress={handleRefreshMedals}
         disabled={loadingMedals}
       >
-        <MaterialIcons name="refresh" size={28} color="#1E88E5" />
+        {loadingMedals ? (
+          <ActivityIndicator size="small" color="#1E88E5" />
+        ) : (
+          <MaterialIcons name="refresh" size={28} color="#1E88E5" />
+        )}
       </TouchableOpacity>
 
       {/* 履歴パネル */}
@@ -698,7 +722,7 @@ const styles = StyleSheet.create({
   },
   modeToggleContainer: {
     position: 'absolute',
-    top: 60,
+    bottom: 10,
     left: 0,
     right: 0,
     zIndex: 10,

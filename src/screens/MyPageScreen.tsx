@@ -5,7 +5,7 @@ import { Button } from '../components/common/Button';
 import { getUserCollections, getUserMedals } from '../services/medalService';
 
 export const MyPageScreen: React.FC = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [collectionCount, setCollectionCount] = useState<number>(0);
   const [registeredCount, setRegisteredCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -34,6 +34,34 @@ export const MyPageScreen: React.FC = () => {
 
     loadStats();
   }, [user]);
+
+  /**
+   * ログアウト処理
+   */
+  const handleLogout = async () => {
+    Alert.alert(
+      'ログアウト',
+      'ログアウトしますか？',
+      [
+        {
+          text: 'キャンセル',
+          style: 'cancel',
+        },
+        {
+          text: 'ログアウト',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('エラー', 'ログアウトに失敗しました');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -76,6 +104,15 @@ export const MyPageScreen: React.FC = () => {
             <Text style={styles.label}>バージョン:</Text>
             <Text style={styles.value}>1.0.0</Text>
           </View>
+        </View>
+
+        {/* ログアウトボタン */}
+        <View style={styles.logoutButtonContainer}>
+          <Button
+            title="ログアウト"
+            onPress={handleLogout}
+            variant="secondary"
+          />
         </View>
       </View>
     </ScrollView>
@@ -152,5 +189,9 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 14,
     color: '#757575',
+  },
+  logoutButtonContainer: {
+    marginTop: 8,
+    marginBottom: 24,
   },
 });

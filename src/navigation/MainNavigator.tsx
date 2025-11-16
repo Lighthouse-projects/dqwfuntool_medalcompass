@@ -1,51 +1,20 @@
 import React from 'react';
-import { Alert, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapScreen } from '../screens/MapScreen';
 import { MyPageScreen } from '../screens/MyPageScreen';
-import { useAuth } from '../contexts/AuthContext';
 
 export type MainTabParamList = {
   Map: { medalNo?: number; openHistory?: boolean; toggleHistory?: boolean } | undefined;
   History: undefined;
   MyPage: undefined;
-  Logout: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export const MainNavigator: React.FC = () => {
-  const { signOut } = useAuth();
   const insets = useSafeAreaInsets();
-
-  /**
-   * ログアウト処理
-   */
-  const handleLogout = async () => {
-    Alert.alert(
-      'ログアウト',
-      'ログアウトしますか？',
-      [
-        {
-          text: 'キャンセル',
-          style: 'cancel',
-        },
-        {
-          text: 'ログアウト',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await signOut();
-            } catch (error) {
-              console.error('Logout error:', error);
-            }
-          },
-        },
-      ]
-    );
-  };
 
   return (
     <Tab.Navigator
@@ -71,9 +40,9 @@ export const MainNavigator: React.FC = () => {
         name="Map"
         component={MapScreen}
         options={{
-          tabBarLabel: 'メダル',
+          tabBarLabel: 'ホーム',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="stars" size={size} color={color} />
+            <MaterialIcons name="home" size={size} color={color} />
           ),
         }}
       />
@@ -102,24 +71,6 @@ export const MainNavigator: React.FC = () => {
           tabBarLabel: 'マイページ',
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="person" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Logout"
-        component={MapScreen}
-        listeners={{
-          tabPress: (e) => {
-            // デフォルトの遷移を防止
-            e.preventDefault();
-            // ログアウト処理を実行
-            handleLogout();
-          },
-        }}
-        options={{
-          tabBarLabel: 'ログアウト',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="logout" size={size} color={color} />
           ),
         }}
       />

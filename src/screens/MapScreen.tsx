@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
 import MapView, { Marker, Region, Circle } from 'react-native-maps';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute, useNavigation, RouteProp, NavigationProp } from '@react-navigation/native';
@@ -47,6 +47,9 @@ export const MapScreen: React.FC = () => {
 
   // 現在地移動中のローディング状態
   const [movingToCurrentLocation, setMovingToCurrentLocation] = useState(false);
+
+  // 履歴パネルの高さ（ピクセル）
+  const [historyPanelHeight, setHistoryPanelHeight] = useState(0);
 
   /**
    * 保存されているモードを復元
@@ -549,21 +552,41 @@ export const MapScreen: React.FC = () => {
   };
 
   /**
+   * パネルの高さに応じた緯度オフセットを計算
+   * パネルで隠れる部分を考慮して、メダルがパネルの上の中央に表示されるようにする
+   */
+  const calculateLatitudeOffset = useCallback((panelHeightPx: number) => {
+    if (!region) return 0;
+
+    const screenHeight = Dimensions.get('window').height;
+    // パネルで隠れる画面の割合
+    const hiddenRatio = panelHeightPx / screenHeight;
+    // 緯度のオフセット（パネルの高さの半分だけ下にずらす = 見える部分の中央に配置）
+    // 下にずらすので、マイナス値にする
+    const latitudeOffset = -(region.latitudeDelta * hiddenRatio) / 2;
+
+    return latitudeOffset;
+  }, [region]);
+
+  /**
    * 履歴からメダルをタップ（地図に移動）
    */
   const handleHistoryMedalPress = useCallback((medalNo: number) => {
     const targetMedal = medals.find((m) => m.medal_no === medalNo);
     if (targetMedal && mapRef.current) {
+      // パネルの高さ分だけ中心を上にオフセット
+      const latitudeOffset = calculateLatitudeOffset(historyPanelHeight);
+
       // 現在のズームレベルを保持したまま位置だけ移動
       const newRegion: Region = {
-        latitude: targetMedal.latitude,
+        latitude: targetMedal.latitude + latitudeOffset,
         longitude: targetMedal.longitude,
         latitudeDelta: region?.latitudeDelta || 0.01,
         longitudeDelta: region?.longitudeDelta || 0.01,
       };
       mapRef.current.animateToRegion(newRegion, 500);
     }
-  }, [medals, region]);
+  }, [medals, region, historyPanelHeight, calculateLatitudeOffset]);
 
   /**
    * 履歴からメダルを押下（地図上でハイライト表示）
@@ -697,6 +720,7 @@ export const MapScreen: React.FC = () => {
         onMedalPress={handleHistoryMedalPress}
         onMedalPressIn={handleHistoryMedalPressIn}
         onMedalPressOut={handleHistoryMedalPressOut}
+        onHeightChange={setHistoryPanelHeight}
       />
     </View>
   );

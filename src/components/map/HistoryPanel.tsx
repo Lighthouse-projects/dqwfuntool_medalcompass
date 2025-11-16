@@ -16,6 +16,7 @@ interface HistoryPanelProps {
   onMedalPress: (medalNo: number) => void;
   onMedalPressIn: (medalNo: number) => void;
   onMedalPressOut: () => void;
+  onHeightChange?: (height: number) => void; // パネルの高さ変更を通知
 }
 
 export const HistoryPanel: React.FC<HistoryPanelProps> = ({
@@ -24,6 +25,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   onMedalPress,
   onMedalPressIn,
   onMedalPressOut,
+  onHeightChange,
 }) => {
   const { user } = useAuth();
   const [collections, setCollections] = useState<MedalCollection[]>([]);
@@ -63,13 +65,16 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
     setCurrentSnapIndex(closestIndex);
     dragStartHeight.current = targetHeight; // スナップ後の高さを記憶
 
+    // アニメーション開始前に高さを通知（即座に反映）
+    onHeightChange?.(targetHeight);
+
     Animated.spring(panelHeight, {
       toValue: targetHeight,
       useNativeDriver: false,
       tension: 50,
       friction: 8,
     }).start();
-  }, [panelHeight, onClose]);
+  }, [panelHeight, onClose, onHeightChange]);
 
   /**
    * PanResponderの設定
@@ -134,6 +139,16 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
       loadCollections();
     }
   }, [visible, loadCollections]);
+
+  /**
+   * パネル表示時に初期高さを通知
+   */
+  useEffect(() => {
+    if (visible) {
+      const initialHeight = SCREEN_HEIGHT * SNAP_POINTS[currentSnapIndex];
+      onHeightChange?.(initialHeight);
+    }
+  }, [visible, currentSnapIndex, onHeightChange]);
 
   /**
    * 日時をフォーマット

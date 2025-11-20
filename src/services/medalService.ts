@@ -71,18 +71,35 @@ export async function getUserMedals(userId: string): Promise<Medal[]> {
 }
 
 /**
- * 指定座標から半径内のメダルを取得（マップ表示用）
- * @param centerLat 中心の緯度
- * @param centerLon 中心の経度
+ * 指定座標から半径内のメダルを取得、または全メダルを取得（マップ表示用）
+ * @param centerLat 中心の緯度（省略時は全メダル取得）
+ * @param centerLon 中心の経度（省略時は全メダル取得）
  * @param radiusKm 半径（キロメートル）デフォルト5km
- * @returns 範囲内のメダル配列
+ * @returns 範囲内のメダル配列、または全メダル配列
  */
 export async function getMedalsWithinRadius(
-  centerLat: number,
-  centerLon: number,
+  centerLat?: number,
+  centerLon?: number,
   radiusKm: number = 5
 ): Promise<Medal[]> {
   try {
+    // 座標が指定されていない場合は全メダルを取得
+    if (centerLat === undefined || centerLon === undefined) {
+      const { data, error } = await supabase
+        .from('medals')
+        .select('*')
+        .eq('is_deleted', false) // 削除済みメダルは除外
+        .limit(10000); // 最大10000件
+
+      if (error) {
+        console.error('Get all medals error:', error);
+        throw new Error('メダルの取得に失敗しました');
+      }
+
+      return data || [];
+    }
+
+    // 座標が指定されている場合は範囲内のメダルを取得
     // 半径5kmの矩形範囲を計算
     const bounds = calculateBoundingBox(centerLat, centerLon, radiusKm * 1000);
 

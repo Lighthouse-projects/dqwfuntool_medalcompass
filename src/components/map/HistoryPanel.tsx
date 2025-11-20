@@ -237,32 +237,34 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   return (
     <Animated.View style={[styles.panelContainer, { height: panelHeight }]} pointerEvents="box-none">
       <View style={styles.panel} pointerEvents="auto">
-        {/* ドラッグハンドル */}
-        <View {...panResponder.panHandlers} style={styles.dragHandleContainer}>
-          <View style={styles.dragHandle} />
-        </View>
-
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>メダルの思い出</Text>
-            <Text style={styles.subtitle}>
-              {selectedDate ? `${filteredCollections.length} 個` : `合計 ${collections.length} 個`}
-            </Text>
+        {/* ドラッグハンドル + ヘッダー全体をドラッグ可能に */}
+        <View {...panResponder.panHandlers}>
+          <View style={styles.dragHandleContainer}>
+            <View style={styles.dragHandle} />
           </View>
-          <View style={styles.headerButtons}>
-            <TouchableOpacity
-              onPress={() => setDateFilterModalVisible(true)}
-              style={styles.calendarButton}
-            >
-              <MaterialIcons
-                name="calendar-today"
-                size={24}
-                color={selectedDate ? COLORS.PRIMARY : COLORS.TEXT_PRIMARY}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <MaterialIcons name="close" size={24} color={COLORS.TEXT_PRIMARY} />
-            </TouchableOpacity>
+
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.title}>メダルの思い出</Text>
+              <Text style={styles.subtitle}>
+                {selectedDate ? `${filteredCollections.length} 個` : `合計 ${collections.length} 個`}
+              </Text>
+            </View>
+            <View style={styles.headerButtons}>
+              <TouchableOpacity
+                onPress={() => setDateFilterModalVisible(true)}
+                style={styles.calendarButton}
+              >
+                <MaterialIcons
+                  name="calendar-today"
+                  size={24}
+                  color={selectedDate ? COLORS.PRIMARY : COLORS.TEXT_PRIMARY}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <MaterialIcons name="close" size={24} color={COLORS.TEXT_PRIMARY} />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 

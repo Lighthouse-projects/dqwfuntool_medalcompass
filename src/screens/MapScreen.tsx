@@ -218,9 +218,11 @@ export const MapScreen: React.FC = () => {
 
 
   /**
-   * 指定座標周辺のメダルを取得（半径5km）
+   * 指定座標周辺のメダルを取得（半径5km）、または全メダルを取得
+   * @param lat 中心の緯度（省略時は全メダル取得）
+   * @param lon 中心の経度（省略時は全メダル取得）
    */
-  const fetchMedalsInRegion = async (lat: number, lon: number) => {
+  const fetchMedalsInRegion = async (lat?: number, lon?: number) => {
     setLoadingMedals(true);
     try {
       const fetchedMedals = await getMedalsWithinRadius(lat, lon, 5);
@@ -288,15 +290,20 @@ export const MapScreen: React.FC = () => {
   };
 
   /**
-   * メダル再読み込み
+   * メダル再読み込み（全メダルを取得）
    */
   const handleRefreshMedals = async () => {
-    const result = await location.getCurrentLocation();
-    if (result.success && result.coordinates) {
-      await fetchMedalsInRegion(result.coordinates.latitude, result.coordinates.longitude);
+    // 即座にローディング状態を表示
+    setLoadingMedals(true);
+
+    try {
+      // 全メダルを取得（引数なし）
+      await fetchMedalsInRegion();
       Alert.alert('完了', 'メダルを再読み込みしました');
-    } else {
-      Alert.alert('エラー', '現在地を取得できませんでした');
+    } catch (error) {
+      console.error('Refresh medals error:', error);
+      Alert.alert('エラー', '再読み込みに失敗しました');
+      setLoadingMedals(false);
     }
   };
 

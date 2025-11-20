@@ -45,7 +45,7 @@ export async function getCurrentLocation(): Promise<Coordinates> {
   try {
     const location = await Location.getCurrentPositionAsync({
       accuracy: Location.Accuracy.High,
-      timeInterval: 10000, // 10秒タイムアウト
+      timeInterval: 5000, // 5秒タイムアウト（GPS取得の待ち時間を短縮）
     });
 
     return {

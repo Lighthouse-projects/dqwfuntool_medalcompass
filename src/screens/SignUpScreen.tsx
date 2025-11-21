@@ -108,13 +108,13 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
 
           {/* パスワード入力 */}
           <TextInput
-            label="パスワード（4文字以上）"
+            label="パスワード（6文字以上）"
             value={password}
             onChangeText={(text) => {
               setPassword(text);
               setPasswordError(null);
             }}
-            placeholder="••••"
+            placeholder="••••••"
             secureTextEntry
             autoCapitalize="none"
             autoComplete="password"
@@ -129,7 +129,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
               setPasswordConfirm(text);
               setPasswordConfirmError(null);
             }}
-            placeholder="••••"
+            placeholder="••••••"
             secureTextEntry
             autoCapitalize="none"
             error={passwordConfirmError}

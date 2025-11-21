@@ -12,12 +12,13 @@ const getErrorMessage = (error: AuthError): string => {
   const errorMessages: { [key: string]: string } = {
     'Invalid login credentials': 'メールアドレスまたはパスワードが正しくありません',
     'User already registered': 'このメールアドレスは既に登録されています',
+    'Password should be at least 6 characters': 'パスワードは6文字以上で入力してください',
     'Password should be at least 8 characters': 'パスワードは8文字以上で入力してください',
     'Unable to validate email address': '有効なメールアドレスを入力してください',
     'Email not confirmed': 'メールアドレスが認証されていません。確認メールをご確認ください',
   };
 
-  return errorMessages[error.message] || '通信エラーが発生しました。しばらくしてから再度お試しください';
+  return errorMessages[error.message] || '通信エラーが発生しました。しばらくしてから再度お試しください。';
 };
 
 // AuthProviderコンポーネント

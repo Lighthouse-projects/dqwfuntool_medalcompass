@@ -8,6 +8,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ImageBackground,
 } from 'react-native';
 import Checkbox from 'expo-checkbox';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -84,17 +85,22 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <ImageBackground
+      source={require('../../assets/00047-3696380417.png')}
+      style={styles.backgroundImage}
+      resizeMode="cover"
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={[styles.content, { paddingTop: 40 + insets.top }]}>
-          {/* タイトル */}
-          <Text style={styles.title}>dqwfunメダルコンパス</Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={[styles.content, { paddingTop: 10 + insets.top }]}>
+            {/* タイトル */}
+            <Text style={styles.title}>dqwfunメダルコンパス</Text>
 
           {/* メールアドレス入力 */}
           <TextInput
@@ -157,21 +163,29 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 60,
   },
   content: {
     paddingHorizontal: 24,
-    paddingVertical: 40,
+    paddingVertical: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 16,
+    marginHorizontal: 16,
   },
   title: {
     fontSize: 24,

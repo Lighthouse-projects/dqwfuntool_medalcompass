@@ -8,6 +8,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ImageBackground,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TextInput } from '../components/common/TextInput';
@@ -63,17 +64,22 @@ export const PasswordResetScreen: React.FC<PasswordResetScreenProps> = ({ naviga
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <ImageBackground
+      source={require('../../assets/00047-3696380417.png')}
+      style={styles.backgroundImage}
+      resizeMode="cover"
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={[styles.content, { paddingTop: 20 + insets.top }]}>
-          {/* ヘッダー */}
-          <View style={styles.header}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={[styles.content, { paddingTop: 20 }]}>
+            {/* ヘッダー */}
+            <View style={styles.header}>
             <TouchableOpacity
               onPress={() => navigation.goBack()}
               style={styles.backButton}
@@ -114,20 +120,29 @@ export const PasswordResetScreen: React.FC<PasswordResetScreenProps> = ({ naviga
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
   },
   scrollContent: {
     flexGrow: 1,
+    justifyContent: 'flex-start',
+    paddingTop: 60,
   },
   content: {
     paddingHorizontal: 24,
     paddingVertical: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 16,
+    marginHorizontal: 16,
   },
   header: {
     flexDirection: 'row',

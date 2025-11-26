@@ -326,51 +326,51 @@ export const MapScreen: React.FC = () => {
     // 仮メダル位置を地図に表示
     setTempMedalPosition({ latitude, longitude });
 
-    // 確認ダイアログ表示
-    Alert.alert(
-      'メダルを登録',
-      'この位置にメダルを登録しますか？',
-      [
-        {
-          text: 'キャンセル',
-          style: 'cancel',
-          onPress: () => {
-            // キャンセル時は仮マーカーを削除
-            setTempMedalPosition(null);
-          },
-        },
-        {
-          text: '登録する',
-          onPress: async () => {
-            try {
-              // メダル登録
-              const newMedal = await registerMedal(user.id, latitude, longitude);
+    try {
+      // メダル登録（即座に実行）
+      const newMedal = await registerMedal(user.id, latitude, longitude);
 
-              // メダルリストに追加（即座に反映）
-              setMedals((prev) => [...prev, newMedal]);
+      // メダルリストに追加（即座に反映）
+      setMedals((prev) => [...prev, newMedal]);
 
-              // 仮マーカーを削除
-              setTempMedalPosition(null);
+      // 登録＆獲得モードの場合は、登録したメダルを即座に獲得
+      if (mode === 'register_and_collect') {
+        try {
+          await collectMedal(user.id, newMedal.medal_no);
+          setCollectedMedals((prev) => new Set(prev).add(newMedal.medal_no));
 
-              // 成功通知
-              Alert.alert('成功', '✅ メダルを登録しました', [{ text: 'OK' }]);
-            } catch (error) {
-              console.error('Register medal error:', error);
-              Alert.alert('エラー', (error as Error).message);
-              // エラー時も仮マーカーを削除
-              setTempMedalPosition(null);
-            }
-          },
-        },
-      ]
-    );
+          // 獲得済みメダルリストを再取得して最新の状態に更新
+          const collections = await getUserCollections(user.id);
+          setCollectedMedalsList(collections);
+        } catch (collectError) {
+          console.error('Collect medal error:', collectError);
+          Alert.alert('エラー', '登録は成功しましたが、獲得処理に失敗しました');
+        }
+      }
+
+      // 仮マーカーを削除
+      setTempMedalPosition(null);
+    } catch (error) {
+      console.error('Register medal error:', error);
+      Alert.alert('エラー', (error as Error).message);
+      // エラー時も仮マーカーを削除
+      setTempMedalPosition(null);
+    }
   };
 
   /**
-   * モード切替
+   * モード切替（3つのモードを順に切り替え）
+   * exploration -> registration -> register_and_collect -> exploration -> ...
    */
   const handleToggleMode = async () => {
-    const newMode = mode === 'registration' ? 'exploration' : 'registration';
+    let newMode: AppMode;
+    if (mode === 'exploration') {
+      newMode = 'registration';
+    } else if (mode === 'registration') {
+      newMode = 'register_and_collect';
+    } else {
+      newMode = 'exploration';
+    }
     setMode(newMode);
     await saveAppMode(newMode); // モードを保存
   };
@@ -391,8 +391,6 @@ export const MapScreen: React.FC = () => {
       // 獲得済みメダルリストを再取得して最新の状態に更新
       const collections = await getUserCollections(user.id);
       setCollectedMedalsList(collections);
-
-      Alert.alert('成功', '✅ メダルを獲得しました');
     } catch (error) {
       console.error('Collect medal error:', error);
       Alert.alert('エラー', (error as Error).message);
@@ -413,7 +411,6 @@ export const MapScreen: React.FC = () => {
       const newSet = new Set(collectedMedals);
       newSet.delete(medal.medal_no);
       setCollectedMedals(newSet);
-      Alert.alert('成功', 'メダル獲得をキャンセルしました');
     } catch (error) {
       console.error('Uncollect medal error:', error);
       Alert.alert('エラー', (error as Error).message);
@@ -458,22 +455,8 @@ export const MapScreen: React.FC = () => {
 
     // 登録モード: 削除または通報処理
     if (isOwn) {
-      // 自分のメダル: 削除オプションを表示
-      Alert.alert(
-        '自分のメダル',
-        `登録日: ${formatDate(medal.created_at)}`,
-        [
-          {
-            text: 'キャンセル',
-            style: 'cancel',
-          },
-          {
-            text: '削除',
-            style: 'destructive',
-            onPress: () => handleDeleteMedal(medal),
-          },
-        ]
-      );
+      // 自分のメダル: 削除確認ダイアログを直接表示
+      handleDeleteMedal(medal);
     } else {
       // 他人のメダル: 通報オプションを表示
       try {
@@ -584,9 +567,6 @@ export const MapScreen: React.FC = () => {
               setMedals((prev) =>
                 prev.filter((m) => m.medal_no !== medal.medal_no)
               );
-
-              // 成功通知
-              Alert.alert('成功', 'メダルを削除しました');
             } catch (error) {
               console.error('Delete medal error:', error);
               Alert.alert('エラー', (error as Error).message);
@@ -670,15 +650,17 @@ export const MapScreen: React.FC = () => {
         <TouchableOpacity
           style={[
             styles.modeToggleButton,
-            mode === 'registration' && styles.modeToggleButtonActive
+            (mode === 'registration' || mode === 'register_and_collect') && styles.modeToggleButtonActive
           ]}
           onPress={handleToggleMode}
         >
           <Text style={[
             styles.modeToggleText,
-            mode === 'registration' && styles.modeToggleTextActive
+            (mode === 'registration' || mode === 'register_and_collect') && styles.modeToggleTextActive
           ]}>
-            {mode === 'registration' ? '📍 登録モード' : '🗺️ 探検モード'}
+            {mode === 'exploration' && '🗺️ 探検モード'}
+            {mode === 'registration' && '📍 登録モード'}
+            {mode === 'register_and_collect' && '📍✅ 登録＆獲得モード'}
           </Text>
         </TouchableOpacity>
       </View>

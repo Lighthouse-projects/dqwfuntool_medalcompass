@@ -7,7 +7,7 @@ const STORAGE_KEYS = {
 } as const;
 
 // アプリモードの型定義
-export type AppMode = 'registration' | 'exploration';
+export type AppMode = 'registration' | 'exploration' | 'register_and_collect';
 
 // マップ状態の型定義
 export interface MapState {
@@ -42,7 +42,7 @@ export async function getAppMode(): Promise<AppMode> {
     const mode = await AsyncStorage.getItem(STORAGE_KEYS.APP_MODE);
 
     // バリデーション: 正しいモード値かチェック
-    if (mode === 'registration' || mode === 'exploration') {
+    if (mode === 'registration' || mode === 'exploration' || mode === 'register_and_collect') {
       return mode;
     }
 

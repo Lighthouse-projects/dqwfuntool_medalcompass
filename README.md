@@ -173,11 +173,12 @@ eas build --profile development --platform ios
 詳細な設計書は`documents/`フォルダを参照してください。
 
 - [要件定義書](documents/1_要件定義書.md)
-- [アーキテクチャ設計書](documents/2_アーキテクチャ設計書.md)
+- [UI要件書](documents/2_UI要件書.md)
 - [機能設計書](documents/3_機能設計書.md)
-- [データベース設計書](documents/4_データベース設計書.md)
-- [データベース作成SQL](documents/4_データベース設計書_DDL.md)
-- [UI設計書](documents/7_UI設計書.md)
+- [アーキテクチャ設計書](documents/4_アーキテクチャ設計書.md)
+- [データベース設計書](documents/5_データベース設計書.md)
+- [利用規約](documents/6_利用規約.md)
+- [プライバシーポリシー](documents/7_プライバシーポリシー.md)
 
 ## ライセンス
 

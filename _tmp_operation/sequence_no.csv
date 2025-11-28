@@ -1,0 +1,4 @@
+"schemaname","sequencename","last_value"
+"public","medals_medal_no_seq","157"
+"public","medal_reports_report_id_seq",NULL
+"public","medal_collections_collection_id_seq","119"

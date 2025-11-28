@@ -5,8 +5,8 @@ import Svg, { Circle } from 'react-native-svg';
 
 interface MedalMarkerProps {
   isOwnMedal: boolean; // 自分のメダルかどうか
-  mode: 'registration' | 'exploration'; // 現在のモード
-  isCollected?: boolean; // 獲得済みかどうか（探検モード用）
+  mode: 'registration' | 'exploration' | 'register_and_collect'; // 現在のモード
+  isCollected?: boolean; // 獲得済みかどうか（探検モード・登録＆獲得モード用）
 }
 
 /**
@@ -15,6 +15,7 @@ interface MedalMarkerProps {
  * 色分けルール:
  * - 登録モード: 自分のメダル=金色、他人のメダル=グレー
  * - 探検モード: 未獲得メダル=金色、獲得済みメダル=グレー
+ * - 登録＆獲得モード: 未獲得メダル=金色、獲得済みメダル=グレー
  */
 export const MedalMarker: React.FC<MedalMarkerProps> = ({
   isOwnMedal,
